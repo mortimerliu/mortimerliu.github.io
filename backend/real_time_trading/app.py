@@ -5,6 +5,8 @@ nest_asyncio.apply()
 from typing import Any, ClassVar, Optional
 from abc import ABC, abstractmethod
 
+import os
+import signal
 import json
 import time
 import threading
@@ -166,8 +168,13 @@ async def handler(websocket):
 
 
 async def main():
-    async with websockets.serve(handler, "", 5001):
-        await asyncio.Future()  # run forever
+    loop = asyncio.get_event_loop()
+    stop = loop.create_future()
+    loop.add_signal_handler(signal.SIGTERM, stop.set_result, None)
+
+    port = int(os.environ.get("PORT", 5001))
+    async with websockets.serve(handler, "", port):
+        await stop
 
 
 if __name__ == "__main__":
