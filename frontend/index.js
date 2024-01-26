@@ -78,7 +78,7 @@ title.parentElement.parentElement.addEventListener('click', (event) => {
 // });
 
 
-const websocket = new WebSocket("ws://localhost:5001/");
+const websocket = new WebSocket("wss://real-time-trading-a4e8e8f49408.herokuapp.com/");
 
 // websocket.addEventListener("open", (event) => {
 //     websocket.send("get_data");
