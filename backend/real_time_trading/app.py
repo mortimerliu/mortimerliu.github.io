@@ -23,7 +23,7 @@ import logging
 util.logToConsole(logging.DEBUG)
 
 ib = IB()
-ib.connect("127.0.0.1", 7496, clientId=1)
+ib.connect("192.168.0.154", 7496, clientId=1)
 
 TICKER_QUEUE = deque()
 
