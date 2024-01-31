@@ -1,74 +1,67 @@
-import time
-import threading
-from datetime import datetime
+from abc import ABC, abstractmethod
+import pickle
+import logging
+from typing import List, Set, Callable
 
-from flask_socketio import emit
-from ibapi.client import EClient
-from ibapi.wrapper import EWrapper
-from ibapi.contract import Contract
-from ibapi.common import TickerId, TickAttrib, TagValueList
-from ibapi.ticktype import TickType, TickTypeEnum
+from ib_insync import IB, util, Ticker
+from ib_insync.contract import Stock
+
+import constants
+from handlers import Handler, RawTickerKafkaHandler, RawTickerFileHandler
+
+logging.getLogger("kafka").setLevel(logging.INFO)
+
+util.logToConsole(logging.INFO)
 
 
-REQID_CONTRACT_MAP = {}
+class AsyncIBApp:
+    """Wrapper class for ib_insync.IB."""
 
+    def __init__(self, host: str, port: int, client_id: int):
+        self.host = host
+        self.port = port
+        self.client_id = client_id
+        self._ib = IB()
 
-class IBAPP(EWrapper, EClient):
-    def __init__(self, socketio):
-        self.socketio = socketio
-        EClient.__init__(self, self)
-        self.data = []
-
-    def connect_tws(self, client_id=0):
-        self.connect("127.0.0.1", 7496, clientId=client_id)
-
-    def reqMktData(
-        self,
-        reqId: TickerId,
-        contract: Contract,
-        genericTickList: str,
-        snapshot: bool,
-        regulatorySnapshot: bool,
-        mktDataOptions: TagValueList,
-    ):
-        REQID_CONTRACT_MAP[reqId] = contract
-        super().reqMktData(
-            reqId=reqId,
-            contract=contract,
-            genericTickList=genericTickList,
-            snapshot=snapshot,
-            regulatorySnapshot=regulatorySnapshot,
-            mktDataOptions=mktDataOptions,
+    def connect(self):
+        self._ib.connect(
+            host=self.host, port=self.port, clientId=self.client_id
         )
 
-    def tickPrice(
-        self,
-        reqId: TickerId,
-        tickType: TickType,
-        price: float,
-        attrib: TickAttrib,
+    def disconnect(self):
+        self._ib.disconnect()
+
+    def request_market_data(
+        self, contracts: List[Stock], callbacks: List[Handler]
     ):
-        print("*" * 60)
-        print(
-            "Tick Price. Ticker Id:",
-            reqId,
-            "tickType:",
-            tickType,
-            TickTypeEnum.to_str(tickType),
-            "Price:",
-            price,
-            "TickAttrib:",
-            attrib,
-            end=" ",
-        )
-        print()
-        if tickType == TickTypeEnum.LAST:
-            print("*" * 20 + "get Last price")
-            contract = REQID_CONTRACT_MAP[reqId]
-            data = {
-                "time": datetime.now().strftime("%H:%M:%S"),
-                "stock": contract.symbol,
-                "price": price,
-                "gap": 0.00,
-            }
-            self.socketio.emit("intraday_high", data)
+        for contract in contracts:
+            self._ib.reqMktData(
+                contract=contract,
+                genericTickList="",
+                snapshot=False,
+                regulatorySnapshot=False,
+                mktDataOptions=[],
+            )
+
+        for callback in callbacks:
+            self._ib.pendingTickersEvent += callback
+
+    def run(self):
+        self._ib.run()
+
+
+if __name__ == "__main__":
+    CONTRACTS = [Stock(**stk) for stk in constants.CONTRACTS]
+
+    ibapp = AsyncIBApp(host="localhost", port=7496, client_id=1)
+    ibapp.connect()
+
+    raw_ticker_kafka_handler = RawTickerKafkaHandler(
+        topic=constants.RAW_TICKER_EVENT
+    )
+    raw_ticker_file_handler = RawTickerFileHandler(directory="data/raw_ticker")
+    ibapp.request_market_data(
+        contracts=CONTRACTS,
+        callbacks=[raw_ticker_kafka_handler, raw_ticker_file_handler],
+    )
+    ibapp.run()

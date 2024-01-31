@@ -1,5 +1,4 @@
 // TODO: move style related to css file; e.g. color, etc.
-// TODO: publish website
 // TODO: build a backend to fetch data from database
 // TOTO: use websocket to update data
 // TODO: scrollable table; limit to x rows
@@ -14,8 +13,8 @@ resizeHandler = () => {
     }
 }
 
-resizeHandler()
-window.visualViewport.addEventListener("resize", resizeHandler);
+// resizeHandler() 
+// window.visualViewport.addEventListener("resize", resizeHandler);
 
 const timeP = document.querySelector('#time');
 const dateP = document.querySelector('#date');
@@ -78,7 +77,8 @@ title.parentElement.parentElement.addEventListener('click', (event) => {
 // });
 
 
-const websocket = new WebSocket("wss://real-time-trading-a4e8e8f49408.herokuapp.com/");
+// const websocket = new WebSocket("wss://real-time-trading-a4e8e8f49408.herokuapp.com/");
+const websocket = new WebSocket("ws://localhost:5001/");
 
 // websocket.addEventListener("open", (event) => {
 //     websocket.send("get_data");
@@ -210,14 +210,14 @@ function populateStreamingRow(event) {
     cell4.textContent = item['price'];
     cell4.className = 'pb-0 pt-1';
 
-    const cell5 = row.insertCell();
-    cell5.textContent = `${(Math.round(item['gap'] * 10000) / 100).toFixed(2)}%`;
-    cell5.className = 'pb-0 pt-1';
-    cell5.classList.add(color);
+    // const cell5 = row.insertCell();
+    // cell5.textContent = `${(Math.round(item['gap'] * 10000) / 100).toFixed(2)}%`;
+    // cell5.className = 'pb-0 pt-1';
+    // cell5.classList.add(color);
 
-    const cell6 = row.insertCell();
-    cell6.textContent = item['cnt'];
-    cell6.className = 'pb-0 pt-1';
+    // const cell6 = row.insertCell();
+    // cell6.textContent = item['cnt'];
+    // cell6.className = 'pb-0 pt-1';
 
 
     if (shouldScroll) {
@@ -240,7 +240,7 @@ function populateStreamingRow(event) {
 
 }
 
-const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
+// const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
 
 // document.querySelector("#buy-streaming").addEventListener('click', async (event) => {
 //     var i = 0;

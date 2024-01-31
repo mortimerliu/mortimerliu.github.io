@@ -1,0 +1,145 @@
+import nest_asyncio
+
+nest_asyncio.apply()
+
+from typing import Any, ClassVar, Optional
+from abc import ABC, abstractmethod
+
+import os
+import signal
+import json
+import time
+import threading
+import asyncio
+import websockets
+from datetime import datetime
+from collections import deque
+from collections import defaultdict
+from dataclasses import dataclass
+from ib_insync import Ticker
+from ib_insync.contract import Stock
+
+from kafka import KafkaConsumer, KafkaProducer
+
+from raw_ticker import RawTicker
+import utils
+
+
+@dataclass
+class IntradayEvent:
+    time: datetime
+    symbol: str
+    price: float
+
+    @staticmethod
+    def from_event_message(message: dict[str, Any]) -> "IntradayEvent":
+        return IntradayEvent(
+            time=utils.str2datetime(message["time"]),
+            symbol=message["symbol"],
+            price=message["price"],
+        )
+
+    def to_event_message(self) -> dict[str, Any]:
+        return {
+            "time": utils.datetime2str(self.time),
+            "symbol": self.symbol,
+            "price": self.price,
+        }
+
+    def to_browser_message(self) -> dict[str, Any]:
+        return {
+            "time": utils.datetime2timestr(self.time),
+            "symbol": self.symbol,
+            "price": self.price,
+        }
+
+
+class IntradayTicker:
+    NO_VALUE: float = -1.0  # TODO: revisit, change to np.nan?
+
+    def __init__(self, contract: Stock, kafka_producer: KafkaProducer):
+        assert contract.symbol is not None
+        self.contract = contract
+        self.kafka_producer = kafka_producer
+        self.reset()
+
+    # @property
+    # def last_price(self) -> float:
+    #     if not self.hasData():
+    #         raise ValueError("No data")
+    #     return self.tickers[-1].last
+
+    # @property
+    # def last_time(self) -> datetime:
+    #     if not self.hasData():
+    #         raise ValueError("No data")
+    #     assert self.tickers[-1].time is not None
+    #     return self.tickers[-1].time
+
+    def reset(self):
+        # self.tickers: list[RawTicker] = []
+        self.first_price: float = self.NO_VALUE
+        self.last_price: float = self.NO_VALUE
+
+        self.intraday_high: float = self.NO_VALUE
+        self.intrady_low: float = self.NO_VALUE
+
+        self.intraday_highs: list[IntradayEvent] = []
+        self.intraday_lows: list[IntradayEvent] = []
+
+    def hasData(self) -> bool:
+        # return len(self.tickers) > 0
+        return self.first_price != self.NO_VALUE
+
+    def _get_gap(self, price) -> float:
+        if not self.hasData():
+            raise ValueError("No data")
+        return (price - self.first_price) / self.first_price
+
+    def is_new_high(self, ticker: RawTicker) -> bool:
+        if not self.hasData():
+            return False
+        return ticker.last > self.intraday_high
+
+    def is_new_low(self, ticker: RawTicker) -> bool:
+        if not self.hasData():
+            return False
+        return ticker.last < self.intraday_low
+
+    def update(self, ticker: RawTicker):
+        assert ticker.symbol == self.contract.symbol
+        if self.is_new_high(ticker):
+            intraday_high = IntradayEvent(
+                time=ticker.time,
+                symbol=ticker.symbol,
+                price=ticker.last,
+            )
+            self.intraday_highs.append(intraday_high)
+            self.kafka_producer.send(
+                "intraday_high",
+                key=self.contract.symbol,
+                value=intraday_high.to_event_message(),
+            )
+            self.intraday_high = ticker.last
+        elif self.is_new_low(ticker):
+            intraday_low = IntradayEvent(
+                time=ticker.time,
+                symbol=ticker.symbol,
+                price=ticker.last,
+            )
+            self.intraday_lows.append(intraday_low)
+            self.kafka_producer.send(
+                "intraday_low",
+                key=self.contract.symbol,
+                value=intraday_low.to_event_message(),
+            )
+            self.intraday_low = ticker.last
+
+        if not self.hasData():
+            self.intraday_high = ticker.last
+            self.intraday_low = ticker.last
+
+        # self.tickers.append(ticker)
+        self.last_price = ticker.last
+        if not self.hasData():
+            self.first_price = ticker.last

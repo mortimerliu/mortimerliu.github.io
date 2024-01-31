@@ -13,8 +13,11 @@
   <script src="index.js" defer></script>
 </head>
 
-<body class="bg-black text-white overflow-hidden">
-  <div class="container-fuild p-0 vh-100 d-flex flex-column overflow-hidden">
+<!-- <body class="bg-black text-white overflow-hidden"> -->
+
+<body class="bg-black text-white">
+  <div class="container-fuild p-0 vh-100 d-flex flex-column">
+    <!-- <div class="container-fuild p-0 vh-100 d-flex flex-column overflow-hidden"> -->
 
     <div class="row border g-0 m-1 top-banner column-gap-2 lh-1 flex-shrink-0">
       <div class="col-1 d-flex">
@@ -39,7 +42,8 @@
     <div class="row flex-grow-1 g-0 ">
       <div class="col-sm ps-1 pe-1 d-flex flex-nowrap flex-column">
         <div class="row border g-0 flex-grow-1 p-1 column-gap-2">
-          <div class="col-sm overflow-y-auto">
+          <!-- <div class="col-sm overflow-y-auto"> -->
+          <div class="col-sm">
             <table class="table table-dark table-sm table-hover table-borderless w-100 lh-1 text-center"
               id="buy-streaming">
               <caption class="d-none">Real-time intraday high</caption>
@@ -58,7 +62,7 @@
               </tbody>
             </table>
           </div>
-          <div class="col-sm overflow-y-auto">
+          <div class="col-sm">
             <table class="table table-dark table-sm table-hover table-borderless w-100 lh-1 text-center" id="buy-order">
               <caption class="d-none">Buy Order</caption>
               <thead>
@@ -79,7 +83,7 @@
       </div>
       <div class="col-sm pe-1 d-flex flex-column">
         <div class="row border g-0 flex-grow-1 p-1 column-gap-2">
-          <div class="col-sm overflow-y-auto">
+          <div class="col-sm">
             <table class="table table-dark table-sm table-hover table-borderless w-100 lh-1 text-center"
               id="sell-streaming">
               <caption class="d-none">Real-time intraday low</caption>
@@ -98,7 +102,7 @@
               </tbody>
             </table>
           </div>
-          <div class="col-sm overflow-y-auto">
+          <div class="col-sm">
             <table class="table table-dark table-sm table-hover table-borderless w-100 lh-1 text-center"
               id="sell-order">
               <caption class="d-none">Sell Order</caption>

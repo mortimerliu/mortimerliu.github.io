@@ -12,7 +12,7 @@ from flask_socketio import SocketIO, send, emit
 from flask_cors import CORS
 
 from ibapi.contract import Contract
-from ibapp import IBAPP
+from backend.real_time_trading.ibapp_bkp import IBAPP
 
 import time
 import threading

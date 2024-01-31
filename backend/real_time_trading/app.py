@@ -1,8 +1,8 @@
-import nest_asyncio
+# import nest_asyncio
 
-nest_asyncio.apply()
+# nest_asyncio.apply()
 
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar, Optional, Set
 from abc import ABC, abstractmethod
 
 import os
@@ -10,161 +10,65 @@ import signal
 import json
 import time
 import threading
+import logging
 import asyncio
 import websockets
 from datetime import datetime
 from collections import deque
 from collections import defaultdict
 from dataclasses import dataclass
+from ibapp import AsyncIBApp
 from ib_insync import IB, util, Ticker
 from ib_insync.contract import Stock
-import logging
+import utils
 
-util.logToConsole(logging.DEBUG)
+from kafka import KafkaConsumer, KafkaProducer
+from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
+from handlers import RawTickerKafkaHandler, RawTickerFileHandler
+from intraday_ticker import IntradayEvent
+import constants
 
-ib = IB()
-ib.connect("3.17.188.231", 7496, clientId=1)
-
-TICKER_QUEUE = deque()
-
-
-def camel_to_snake(name: str) -> str:
-    return "".join(
-        ["_" + c.lower() if c.isupper() else c for c in name]
-    ).lstrip("_")
+logging.getLogger("kafka").setLevel(logging.INFO)
+logging.getLogger("aiokafka").setLevel(logging.INFO)
+logging.getLogger("websockets").setLevel(logging.INFO)
 
 
-@dataclass
-class IntradayRecord(ABC):
-    NO_VALUE: ClassVar[float] = -1.0  # TODO: revisit, change to np.nan?
+CONTRACTS = [Stock(**stk) for stk in constants.CONTRACTS]
 
-    contract: Optional[Stock]
-    time: datetime = datetime.now()
-    price: float = NO_VALUE
-    count: int = -1
-    _initial_time: datetime = datetime.now()
-    _initial_price: float = NO_VALUE
-    last_price: float = NO_VALUE
-
-    @property
-    def gap(self) -> float:
-        if self._initial_price == self.NO_VALUE:
-            raise ValueError("initial price is not set")
-        return (self.price - self._initial_price) / self._initial_price
-
-    def _time_str(self) -> str:
-        return self.time.astimezone().strftime("%H:%M:%S")
-
-    @abstractmethod
-    def should_update(self, ticker: Ticker) -> bool:
-        raise NotImplementedError
-
-    def update(self, ticker: Ticker) -> bool:
-        assert ticker.time is not None, "ticker.time is None"
-        if self._initial_price == self.NO_VALUE:
-            self._initial_price = ticker.last
-            self._initial_time = ticker.time
-        if self.should_update(ticker):
-            self.time = ticker.time
-            self.price = ticker.last
-            self.count += 1
-            return True
-        return False
-
-    def to_message(self) -> dict[str, Any]:
-        return {
-            "type": camel_to_snake(self.__class__.__name__),
-            "data": {
-                "time": self._time_str(),
-                "symbol": self.contract.symbol,
-                "price": self.price,
-                "gap": self.gap,
-                "cnt": self.count,
-            },
-        }
+today = utils.datetime2datestr(utils.get_today())
 
 
-@dataclass
-class IntradayHigh(IntradayRecord):
-    def should_update(self, ticker: Ticker) -> bool:
-        return self.price == self.NO_VALUE or ticker.last > self.price
-
-
-@dataclass
-class IntradayLow(IntradayRecord):
-    def should_update(self, ticker: Ticker) -> bool:
-        return self.price == self.NO_VALUE or ticker.last < self.price
-
-
-INTRADAY_HIGHS = {}
-INTRADAY_LOWS = {}
-
-symbols = [
-    {
-        "symbol": "AAPL",
-        "exchange": "SMART",
-        "currency": "USD",
-    },
-    {
-        "symbol": "AMZN",
-        "exchange": "SMART",
-        "currency": "USD",
-    },
-    {
-        "symbol": "GOOGL",
-        "exchange": "SMART",
-        "currency": "USD",
-    },
-    {
-        "symbol": "NVDA",
-        "exchange": "SMART",
-        "currency": "USD",
-    },
-    {
-        "symbol": "MSFT",
-        "exchange": "SMART",
-        "currency": "USD",
-    },
-]
-
-contracts = [Stock(**stk) for stk in symbols]
-for contract in contracts:
-    INTRADAY_HIGHS[contract.symbol] = IntradayHigh(contract=contract)
-    INTRADAY_LOWS[contract.symbol] = IntradayLow(contract=contract)
-ib.qualifyContracts(*contracts)
-
-
-async def process(websocket):
-    while True:
-        if TICKER_QUEUE:
-            ticker: Ticker = TICKER_QUEUE.popleft()
-            intraday_high = INTRADAY_HIGHS[ticker.contract.symbol]
-            high_updated = intraday_high.update(ticker)
-            if high_updated:
-                await websocket.send(json.dumps(intraday_high.to_message()))
-
-            intraday_low = INTRADAY_LOWS[ticker.contract.symbol]
-            low_updated = intraday_low.update(ticker)
-            if low_updated:
-                await websocket.send(json.dumps(intraday_low.to_message()))
-        else:
-            await asyncio.sleep(0.1)
+async def join(websocket):
+    print("creating kafka consumer")
+    consumer = AIOKafkaConsumer(
+        constants.INTRADAY_HIGH_EVENT,
+        constants.INTRADAY_LOW_EVENT,
+        bootstrap_servers=constants.KAFKA_BOOTSTRAP_SERVERS,
+        key_deserializer=utils.bytes2str,
+        value_deserializer=utils.bytes2object,
+        auto_offset_reset="earliest",
+    )
+    await consumer.start()
+    try:
+        async for msg in consumer:
+            topic = msg.topic
+            event = IntradayEvent.from_event_message(msg.value)
+            if utils.datetime2datestr(event.time) < today:
+                print("event is from previous day")
+                continue
+            message = {
+                "type": topic,
+                "data": event.to_browser_message(),
+            }
+            print(message)
+            await websocket.send(json.dumps(message))
+    finally:
+        await consumer.stop()
 
 
 async def handler(websocket):
-    # async for message in websocket:
-    #     print(message)
-
-    for contract in contracts:
-        ib.reqMktData(contract, "", False, False, [])
-
-    def onPendingTickers(tickers):
-        for t in tickers:
-            TICKER_QUEUE.append(t)
-
-    ib.pendingTickersEvent += onPendingTickers
-
-    await process(websocket)
+    print("new connection")
+    await join(websocket)
 
 
 async def main():
