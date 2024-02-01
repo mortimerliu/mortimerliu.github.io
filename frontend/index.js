@@ -210,14 +210,14 @@ function populateStreamingRow(event) {
     cell4.textContent = item['price'];
     cell4.className = 'pb-0 pt-1';
 
-    // const cell5 = row.insertCell();
-    // cell5.textContent = `${(Math.round(item['gap'] * 10000) / 100).toFixed(2)}%`;
-    // cell5.className = 'pb-0 pt-1';
-    // cell5.classList.add(color);
+    const cell5 = row.insertCell();
+    cell5.textContent = `${(Math.round(item['gap'] * 10000) / 100).toFixed(2)}%`;
+    cell5.className = 'pb-0 pt-1';
+    cell5.classList.add(color);
 
-    // const cell6 = row.insertCell();
-    // cell6.textContent = item['cnt'];
-    // cell6.className = 'pb-0 pt-1';
+    const cell6 = row.insertCell();
+    cell6.textContent = item['count'];
+    cell6.className = 'pb-0 pt-1';
 
 
     if (shouldScroll) {
