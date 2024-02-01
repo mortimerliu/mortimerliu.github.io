@@ -30,6 +30,8 @@ class IntradayEvent:
     time: datetime
     symbol: str
     price: float
+    gap: float
+    count: int
 
     @staticmethod
     def from_event_message(message: dict[str, Any]) -> "IntradayEvent":
@@ -37,6 +39,8 @@ class IntradayEvent:
             time=utils.str2datetime(message["time"]),
             symbol=message["symbol"],
             price=message["price"],
+            gap=message.get("gap", -1.0),
+            count=message.get("count", -1),
         )
 
     def to_event_message(self) -> dict[str, Any]:
@@ -44,23 +48,26 @@ class IntradayEvent:
             "time": utils.datetime2str(self.time),
             "symbol": self.symbol,
             "price": self.price,
-        }
-
-    def to_browser_message(self) -> dict[str, Any]:
-        return {
-            "time": utils.datetime2timestr(self.time),
-            "symbol": self.symbol,
-            "price": self.price,
+            "gap": self.gap,
+            "count": self.count,
         }
 
 
 class IntradayTicker:
     NO_VALUE: float = -1.0  # TODO: revisit, change to np.nan?
 
-    def __init__(self, contract: Stock, kafka_producer: KafkaProducer):
+    def __init__(
+        self,
+        contract: Stock,
+        kafka_producer: KafkaProducer,
+        intraday_high_threshold: float = 0.0,
+        intraday_low_threshold: float = 0.0,
+    ):
         assert contract.symbol is not None
         self.contract = contract
         self.kafka_producer = kafka_producer
+        self.intraday_high_threshold = intraday_high_threshold
+        self.intraday_low_threshold = intraday_low_threshold
         self.reset()
 
     # @property
@@ -99,12 +106,16 @@ class IntradayTicker:
     def is_new_high(self, ticker: RawTicker) -> bool:
         if not self.hasData():
             return False
-        return ticker.last > self.intraday_high
+        return ticker.last > self.intraday_high * (
+            1 + self.intraday_high_threshold
+        )
 
     def is_new_low(self, ticker: RawTicker) -> bool:
         if not self.hasData():
             return False
-        return ticker.last < self.intraday_low
+        return ticker.last < self.intraday_low * (
+            1 - self.intraday_low_threshold
+        )
 
     def update(self, ticker: RawTicker):
         assert ticker.symbol == self.contract.symbol
@@ -113,6 +124,8 @@ class IntradayTicker:
                 time=ticker.time,
                 symbol=ticker.symbol,
                 price=ticker.last,
+                gap=self._get_gap(ticker.last),
+                count=len(self.intraday_highs) + 1,
             )
             self.intraday_highs.append(intraday_high)
             self.kafka_producer.send(
@@ -126,6 +139,8 @@ class IntradayTicker:
                 time=ticker.time,
                 symbol=ticker.symbol,
                 price=ticker.last,
+                gap=self._get_gap(ticker.last),
+                count=len(self.intraday_lows) + 1,
             )
             self.intraday_lows.append(intraday_low)
             self.kafka_producer.send(
