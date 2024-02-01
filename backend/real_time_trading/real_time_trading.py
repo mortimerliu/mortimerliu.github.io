@@ -16,10 +16,26 @@ logger = logging.getLogger(__name__)
 
 logging.getLogger("kafka").setLevel(logging.DEBUG)
 
+formatter = logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+fh = logging.FileHandler("real_time_trading.log")
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(formatter)
+logger.addHandler(fh)
+
 
 class RealTimeTrading:
     def __init__(self, contracts: list[Stock]):
-        self.today = utils.datetime2datestr(utils.get_today())
         self.topic = constants.RAW_TICKER_EVENT
         self._consumer = KafkaConsumer(
             self.topic,
@@ -44,8 +60,9 @@ class RealTimeTrading:
             )
 
     def _consume(self, message):
+        today = utils.datetime2datestr(utils.get_today())
         raw_ticker = RawTicker.from_message(message.value)
-        if utils.datetime2datestr(raw_ticker.time) < self.today:
+        if utils.datetime2datestr(raw_ticker.time) < today:
             logger.warning("ticker is from previous day: %s", raw_ticker.time)
             return
         intraday_ticker = self.tickers.get(raw_ticker.symbol)
