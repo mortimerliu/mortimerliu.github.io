@@ -1,10 +1,15 @@
 from abc import ABC, abstractmethod
 from typing import Set, Optional, Any
+
+import logging
 from ib_insync import Ticker
 from kafka import KafkaProducer
 
 import utils
 from raw_ticker import RawTicker
+
+
+logger = logging.getLogger(__name__)
 
 
 class Handler(ABC):
@@ -33,6 +38,8 @@ class RawTickerKafkaHandler(Handler):
         return RawTicker.from_ticker(ticker).to_message()
 
     def to_kafka(self, ticker: Ticker):
+        assert ticker.contract is not None
+        logger.info("sending ticker to kafka: %s", ticker.contract.symbol)
         if not hasattr(self, "_producer"):
             self._create_producer()
         assert ticker.contract is not None
@@ -58,11 +65,14 @@ class RawTickerFileHandler(Handler):
     ):
         self.directory = directory
         utils.makedirs(self.directory)
-        today = utils.datetime2str(utils.get_today(), format="%Y%m%d")
-        self.filename_prefix = filename_prefix or f"raw_ticker_{today}"
+        self.filename_prefix = filename_prefix
 
     def _get_filename(self, symbol: str) -> str:
-        return f"{self.directory}/{self.filename_prefix}_{symbol}.txt"
+        prefix = self.filename_prefix
+        if not prefix:
+            today = utils.datetime2str(utils.get_today(), format="%Y%m%d")
+            prefix = f"raw_ticker_{today}"
+        return f"{self.directory}/{prefix}_{symbol}.txt"
 
     def __call__(self, tickers: Set[Ticker]):
         for ticker in tickers:
