@@ -35,7 +35,21 @@ logging.getLogger("websockets").setLevel(logging.INFO)
 
 CONTRACTS = [Stock(**stk) for stk in constants.CONTRACTS]
 
-today = utils.datetime2datestr(utils.get_today())
+formatter = logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+fh = logging.FileHandler("real_time_trading.log")
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(formatter)
+logger.addHandler(fh)
 
 
 async def join(websocket):
@@ -51,17 +65,19 @@ async def join(websocket):
     await consumer.start()
     try:
         async for msg in consumer:
+            today = utils.datetime2datestr(utils.get_today())
             topic = msg.topic
-            event = IntradayEvent.from_event_message(msg.value)
-            if utils.datetime2datestr(event.time) < today:
-                print("event is from previous day")
-                continue
-            message = {
-                "type": topic,
-                "data": event.to_browser_message(),
-            }
-            print(message)
-            await websocket.send(json.dumps(message))
+            if msg.value:
+                event = IntradayEvent.from_event_message(msg.value)
+                if utils.datetime2datestr(event.time) < today:
+                    logger.warning("skipping intraday event from previous day")
+                    continue
+                message = {
+                    "type": topic,
+                    "data": event.to_event_message(),
+                }
+                logger.info("sending message: %s", message)
+                await websocket.send(json.dumps(message))
     finally:
         await consumer.stop()
 

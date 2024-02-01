@@ -28,7 +28,8 @@ def bytes2object(b: bytes) -> Any:
     return pickle.loads(b)
 
 
-DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S%Z"
+DATETIME_FORMAT_NO_TZ = "%Y-%m-%d %H:%M:%S"
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M:%S"
 
@@ -46,7 +47,11 @@ def datetime2datestr(dt: datetime) -> str:
 
 
 def str2datetime(s: str, format=DATETIME_FORMAT) -> datetime:
-    return datetime.strptime(s, format)
+    try:
+        dt = datetime.strptime(s, format)
+    except ValueError:
+        dt = datetime.strptime(s, DATETIME_FORMAT_NO_TZ)
+    return dt
 
 
 def get_today() -> datetime:
@@ -58,6 +63,9 @@ def makedirs(path: str):
 
 
 def is_core_market_minutes(dt: datetime) -> bool:
+    """dt should be timezone aware"""
+    assert dt.tzinfo is not None
+
     nasdaq = xcals.get_calendar("NASDAQ")
     date = datetime2datestr(dt)
     if not nasdaq.is_session(date):
