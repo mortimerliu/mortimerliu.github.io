@@ -30,7 +30,7 @@ ch.setLevel(logging.INFO)
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-fh = logging.FileHandler("ibapp.log")
+fh = logging.FileHandler(constants.IBAPP_LOG_FILE)
 fh.setLevel(logging.DEBUG)
 fh.setFormatter(formatter)
 logger.addHandler(fh)

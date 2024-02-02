@@ -36,3 +36,8 @@ SELL_ORDER_EVENT = "sell_order"
 KAFKA_HOST = "localhost"
 KAFKA_PORT = 9092
 KAFKA_BOOTSTRAP_SERVERS = f"{KAFKA_HOST}:{KAFKA_PORT}"
+
+
+IBAPP_LOG_FILE = "logs/ibapp.log"
+RTT_LOG_FILE = "logs/real_time_trading.log"
+APP_LOG_FILE = "logs/app.log"
