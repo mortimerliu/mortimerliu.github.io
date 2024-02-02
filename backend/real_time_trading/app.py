@@ -46,7 +46,7 @@ ch.setLevel(logging.INFO)
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-fh = logging.FileHandler("real_time_trading.log")
+fh = logging.FileHandler(constants.APP_LOG_FILE)
 fh.setLevel(logging.DEBUG)
 fh.setFormatter(formatter)
 logger.addHandler(fh)
