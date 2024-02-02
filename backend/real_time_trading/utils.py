@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional, Tuple
 import os
 from datetime import datetime
 import exchange_calendars as xcals
@@ -66,11 +66,27 @@ def is_core_market_minutes(dt: datetime) -> bool:
     """dt should be timezone aware"""
     assert dt.tzinfo is not None
 
+    open_, close = get_market_open_close(dt)
+    if open_ is None or close is None:
+        return False
+    return dt >= open_ and dt < close
+
+
+def get_market_open_close(
+    dt: Optional[datetime] = None,
+) -> Tuple[Optional[datetime], Optional[datetime]]:
+    """Get the open and close times for the NASDAQ market on a given datetime.
+    open is inclusive, close is exclusive.
+
+    dt should be timezone aware. If dt is None, the current time is used.
+    """
+    if dt is None:
+        dt = datetime.now().astimezone()  # local time, not UTC
+    assert dt.tzinfo is not None
     nasdaq = xcals.get_calendar("NASDAQ")
     date = datetime2datestr(dt)
     if not nasdaq.is_session(date):
-        return False
+        return None, None
     open_ = nasdaq.schedule.at[date, "open"]
     close = nasdaq.schedule.at[date, "close"]
-
-    return dt >= open_ and dt < close
+    return open_, close
