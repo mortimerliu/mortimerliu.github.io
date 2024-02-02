@@ -4,3 +4,4 @@ ib_insync
 exchange_calendars
 kafka-python
 aiokakfa
+pytest
