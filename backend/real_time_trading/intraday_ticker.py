@@ -20,6 +20,7 @@ from ib_insync import Ticker
 from ib_insync.contract import Stock
 
 from kafka import KafkaConsumer, KafkaProducer
+from utc_datetime import UTCDateTime
 
 from raw_ticker import RawTicker
 import utils
@@ -27,7 +28,7 @@ import utils
 
 @dataclass
 class IntradayEvent:
-    time: datetime
+    time: UTCDateTime
     symbol: str
     price: float
     gap: float
@@ -36,7 +37,7 @@ class IntradayEvent:
     @staticmethod
     def from_event_message(message: dict[str, Any]) -> "IntradayEvent":
         return IntradayEvent(
-            time=utils.str2datetime(message["time"]),
+            time=UTCDateTime.from_isoformat(message["time"]),
             symbol=message["symbol"],
             price=message["price"],
             gap=message.get("gap", -1.0),
@@ -45,7 +46,7 @@ class IntradayEvent:
 
     def to_event_message(self) -> dict[str, Any]:
         return {
-            "time": utils.datetime2str(self.time),
+            "time": self.time.to_isoforamt(),
             "symbol": self.symbol,
             "price": self.price,
             "gap": self.gap,
@@ -117,14 +118,14 @@ class IntradayTicker:
             1 - self.intraday_low_threshold
         )
 
-    def update(self, ticker: RawTicker):
-        assert ticker.symbol == self.contract.symbol
-        if self.is_new_high(ticker):
+    def update(self, raw_ticker: RawTicker):
+        assert raw_ticker.symbol == self.contract.symbol
+        if self.is_new_high(raw_ticker):
             intraday_high = IntradayEvent(
-                time=ticker.time,
-                symbol=ticker.symbol,
-                price=ticker.last,
-                gap=self._get_gap(ticker.last),
+                time=raw_ticker.time,
+                symbol=raw_ticker.symbol,
+                price=raw_ticker.last,
+                gap=self._get_gap(raw_ticker.last),
                 count=len(self.intraday_highs) + 1,
             )
             self.intraday_highs.append(intraday_high)
@@ -133,13 +134,13 @@ class IntradayTicker:
                 key=self.contract.symbol,
                 value=intraday_high.to_event_message(),
             )
-            self.intraday_high = ticker.last
-        elif self.is_new_low(ticker):
+            self.intraday_high = raw_ticker.last
+        elif self.is_new_low(raw_ticker):
             intraday_low = IntradayEvent(
-                time=ticker.time,
-                symbol=ticker.symbol,
-                price=ticker.last,
-                gap=self._get_gap(ticker.last),
+                time=raw_ticker.time,
+                symbol=raw_ticker.symbol,
+                price=raw_ticker.last,
+                gap=self._get_gap(raw_ticker.last),
                 count=len(self.intraday_lows) + 1,
             )
             self.intraday_lows.append(intraday_low)
@@ -148,13 +149,13 @@ class IntradayTicker:
                 key=self.contract.symbol,
                 value=intraday_low.to_event_message(),
             )
-            self.intraday_low = ticker.last
+            self.intraday_low = raw_ticker.last
 
         if not self.hasData():
-            self.intraday_high = ticker.last
-            self.intraday_low = ticker.last
+            self.intraday_high = raw_ticker.last
+            self.intraday_low = raw_ticker.last
 
         # self.tickers.append(ticker)
-        self.last_price = ticker.last
+        self.last_price = raw_ticker.last
         if not self.hasData():
-            self.first_price = ticker.last
+            self.first_price = raw_ticker.last

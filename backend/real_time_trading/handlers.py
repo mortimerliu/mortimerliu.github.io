@@ -70,7 +70,9 @@ class RawTickerFileHandler(Handler):
     def _get_filename(self, symbol: str) -> str:
         prefix = self.filename_prefix
         if not prefix:
-            today = utils.datetime2str(utils.get_today(), format="%Y%m%d")
+            today = utils.datetime2datestr(
+                utils.get_local_now(), format="%Y%m%d"
+            )
             prefix = f"raw_ticker_{today}"
         return f"{self.directory}/{prefix}_{symbol}.txt"
 
