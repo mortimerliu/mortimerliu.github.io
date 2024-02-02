@@ -8,6 +8,7 @@ from ib_insync.contract import Stock
 
 from datetime import datetime, timedelta
 import utils
+from utc_datetime import UTCDateTime
 import constants
 from intraday_ticker import IntradayTicker, IntradayEvent
 
@@ -42,16 +43,6 @@ class RealTimeTrading:
         bake_in_minutes: int = 0,
         bake_out_minutes: int = 0,
     ):
-        self.tickers: Dict[str, IntradayTicker] = {}
-        for contract in contracts:
-            self.tickers[contract.symbol] = IntradayTicker(
-                contract=contract,
-                kafka_producer=self._producer,
-            )
-
-        self.bake_in_minutes = bake_in_minutes
-        self.bake_out_minutes = bake_out_minutes
-
         # set up kafka consumer and producer
         self._consumer = KafkaConsumer(
             constants.RAW_TICKER_EVENT,
@@ -70,7 +61,17 @@ class RealTimeTrading:
             max_in_flight_requests_per_connection=1,
         )
 
-    def is_update_window(self, dt: datetime) -> bool:
+        self.tickers: Dict[str, IntradayTicker] = {}
+        for contract in contracts:
+            self.tickers[contract.symbol] = IntradayTicker(
+                contract=contract,
+                kafka_producer=self._producer,
+            )
+
+        self.bake_in_minutes = bake_in_minutes
+        self.bake_out_minutes = bake_out_minutes
+
+    def inside_update_window(self, dt: UTCDateTime) -> bool:
         open_, close = utils.get_market_open_close(dt)
         if open_ is None or close is None:
             return False
@@ -87,7 +88,7 @@ class RealTimeTrading:
         if utils.datetime2datestr(raw_ticker.time) < today:
             logger.warning("ticker is from previous day: %s", raw_ticker.time)
             return
-        if not self.is_update_window(raw_ticker.time):
+        if not self.inside_update_window(raw_ticker.time):
             logger.warning(
                 "ticker is outside update window: %s", raw_ticker.time
             )
