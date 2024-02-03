@@ -49,10 +49,6 @@ def str2datetime(s: str, format=DATETIME_FORMAT) -> datetime:
     return datetime.strptime(s, format)
 
 
-def get_today() -> datetime:
-    return datetime.today()
-
-
 def get_utcnow() -> datetime:
     """Get the current time in UTC, timezone aware"""
     return datetime.now(timezone.utc)

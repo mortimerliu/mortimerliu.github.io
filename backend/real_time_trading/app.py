@@ -65,11 +65,11 @@ async def join(websocket):
     await consumer.start()  # type: ignore
     try:
         async for msg in consumer:
-            today = utils.datetime2datestr(utils.get_today())
+            today = utils.datetime2datestr(utils.get_local_now())
             topic = msg.topic
             if msg.value:
                 event = IntradayEvent.from_event_message(msg.value)
-                if utils.datetime2datestr(event.time) < today:
+                if utils.datetime2datestr(event.time.to_timezone()) < today:
                     logger.warning("skipping intraday event from previous day")
                     continue
                 message = {

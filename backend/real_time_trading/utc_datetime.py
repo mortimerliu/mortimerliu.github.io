@@ -109,7 +109,8 @@ class UTCDateTime(datetime):
     def to_isoforamt(self) -> str:
         return self.isoformat()
 
-    def to_timezone(self, tz: timezone) -> datetime:
+    def to_timezone(self, tz: Optional[timezone] = None) -> datetime:
+        """Convert to timezone aware datetime. If tz is None, return local timezone."""
         dt = datetime(
             self.year,
             self.month,
