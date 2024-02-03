@@ -75,9 +75,11 @@ function populateStreamingRow(event, target, color, sign) {
     const row = insertOneRowAtLast(target, 7);
     row.cells[1].textContent = parseDateString(event['time']);
     row.cells[2].textContent = sign;
+    row.cells[2].classList.add(color)
     row.cells[3].textContent = event['symbol'];
     row.cells[4].textContent = event['price'];
     row.cells[5].textContent = `${(Math.round(event['gap'] * 10000) / 100).toFixed(2)}%`;
+    row.cells[5].classList.add(color)
     row.cells[6].textContent = event['count'];
 
     if (shouldScroll) {
@@ -115,10 +117,11 @@ function insertOneRowAtLast(target, numCells) {
     const idx = tbody.rows.length;
     const row = tbody.insertRow();
     for (let i = 0; i < numCells; i++) {
-        row.insertCell();
+        const cell = row.insertCell();
         if (i === 0) {
-            row.cells[i].textContent = idx + 1;
+            cell.textContent = idx + 1;
         }
+        cell.className = 'pb-0 pt-1';
     }
     return row;
 }
