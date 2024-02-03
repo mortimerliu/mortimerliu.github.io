@@ -74,7 +74,7 @@ class AsyncIBApp:
         self._ib.run()
 
     def register_event_handler(self, event_name: str, handler: Callable):
-        event: Event = getattr(self._ib, event_name)
+        event: Event = getattr(self._ib, event_name)  # NOSONAR
         event += handler
 
     def sleep(self, seconds: int):

@@ -62,7 +62,7 @@ async def join(websocket):
         value_deserializer=utils.bytes2object,
         auto_offset_reset="earliest",
     )
-    await consumer.start()
+    await consumer.start()  # type: ignore
     try:
         async for msg in consumer:
             today = utils.datetime2datestr(utils.get_today())
@@ -79,12 +79,12 @@ async def join(websocket):
                 logger.info("sending message: %s", message)
                 await websocket.send(json.dumps(message))
     finally:
-        await consumer.stop()
+        await consumer.stop()  # type: ignore
 
 
 async def handler(websocket):
     print("new connection")
-    await join(websocket)
+    await join(websocket)  # type: ignore
 
 
 async def main():

@@ -42,6 +42,7 @@ class RealTimeTrading:
         contracts: list[Stock],
         bake_in_minutes: int = 0,
         bake_out_minutes: int = 0,
+        _bypass_update_window: bool = False,
     ):
         # set up kafka consumer and producer
         self._consumer = KafkaConsumer(
@@ -70,6 +71,7 @@ class RealTimeTrading:
 
         self.bake_in_minutes = bake_in_minutes
         self.bake_out_minutes = bake_out_minutes
+        self._bypass_update_window = _bypass_update_window
 
     def inside_update_window(self, dt: UTCDateTime) -> bool:
         open_, close = utils.get_market_open_close(dt)
@@ -88,7 +90,9 @@ class RealTimeTrading:
         if utils.datetime2datestr(raw_ticker.time) < today:
             logger.warning("ticker is from previous day: %s", raw_ticker.time)
             return
-        if not self.inside_update_window(raw_ticker.time):
+        if not self._bypass_update_window and not self.inside_update_window(
+            raw_ticker.time
+        ):
             logger.warning(
                 "ticker is outside update window: %s", raw_ticker.time
             )
@@ -109,5 +113,5 @@ class RealTimeTrading:
 
 if __name__ == "__main__":
     CONTRACTS = [Stock(**stk) for stk in constants.CONTRACTS]
-    rtt = RealTimeTrading(contracts=CONTRACTS)
+    rtt = RealTimeTrading(contracts=CONTRACTS, _bypass_update_window=True)
     rtt.consume()
