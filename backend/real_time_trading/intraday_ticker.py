@@ -24,6 +24,11 @@ from utc_datetime import UTCDateTime
 
 from raw_ticker import RawTicker
 import utils
+import constants
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -104,6 +109,10 @@ class IntradayTicker:
             raise ValueError("No data")
         return (price - self.first_price) / self.first_price
 
+    @property
+    def gap(self) -> float:
+        return self._get_gap(self.last_price)
+
     def is_new_high(self, ticker: RawTicker) -> bool:
         if not self.hasData():
             return False
@@ -118,8 +127,10 @@ class IntradayTicker:
             1 - self.intraday_low_threshold
         )
 
-    def update(self, raw_ticker: RawTicker):
+    def update(self, raw_ticker: RawTicker) -> bool:
         assert raw_ticker.symbol == self.contract.symbol
+        update_flag = False
+
         if self.is_new_high(raw_ticker):
             intraday_high = IntradayEvent(
                 time=raw_ticker.time,
@@ -130,11 +141,13 @@ class IntradayTicker:
             )
             self.intraday_highs.append(intraday_high)
             self.kafka_producer.send(
-                "intraday_high",
+                constants.INTRADAY_HIGH_EVENT,
                 key=self.contract.symbol,
                 value=intraday_high.to_event_message(),
             )
+            logger.info("sending intraday high event")
             self.intraday_high = raw_ticker.last
+            update_flag = True
         elif self.is_new_low(raw_ticker):
             intraday_low = IntradayEvent(
                 time=raw_ticker.time,
@@ -145,17 +158,19 @@ class IntradayTicker:
             )
             self.intraday_lows.append(intraday_low)
             self.kafka_producer.send(
-                "intraday_low",
+                constants.INTRADAY_LOW_EVENT,
                 key=self.contract.symbol,
                 value=intraday_low.to_event_message(),
             )
+            logger.info("sending intraday low event")
             self.intraday_low = raw_ticker.last
-
-        if not self.hasData():
-            self.intraday_high = raw_ticker.last
-            self.intraday_low = raw_ticker.last
+            update_flag = True
 
         # self.tickers.append(ticker)
         self.last_price = raw_ticker.last
         if not self.hasData():
             self.first_price = raw_ticker.last
+            self.intraday_high = raw_ticker.last
+            self.intraday_low = raw_ticker.last
+
+        return update_flag

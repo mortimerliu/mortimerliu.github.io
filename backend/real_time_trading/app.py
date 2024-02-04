@@ -26,7 +26,9 @@ from kafka import KafkaConsumer, KafkaProducer
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from handlers import RawTickerKafkaHandler, RawTickerFileHandler
 from intraday_ticker import IntradayEvent
+from top_symbol import TopNSymbols
 import constants
+from utc_datetime import UTCDateTime
 
 logging.getLogger("kafka").setLevel(logging.INFO)
 logging.getLogger("aiokafka").setLevel(logging.INFO)
@@ -39,7 +41,7 @@ formatter = logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
@@ -52,8 +54,38 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 
 
-async def join(websocket):
-    print("creating kafka consumer")
+async def send_intraday_event(websocket, topic, message):
+    today = utils.datetime2datestr(utils.get_local_now())
+    event = IntradayEvent.from_event_message(message)
+    # if utils.datetime2datestr(event.time.to_timezone()) < today:
+    #     logger.warning("skipping intraday event from previous day")
+    #     return
+    message = {
+        "type": topic,
+        "data": event.to_event_message(),
+    }
+    logger.info("sending message: %s", message)
+    await websocket.send(json.dumps(message))
+
+
+async def send_top_event(websocket, topic, message):
+    today = utils.datetime2datestr(utils.get_local_now())
+    logger.debug("today: %s", today)
+    event = TopNSymbols.from_message(message)
+    logger.debug("event: %s", event)
+    # if utils.datetime2datestr(event.time.to_timezone()) < today:
+    #     logger.warning("skipping top event from previous day")
+    #     return
+    message = {
+        "type": topic,
+        "data": event.to_message_only_data(),
+    }
+    logger.info("sending message: %s", message)
+    await websocket.send(json.dumps(message))
+
+
+async def consume_intraday_events(websocket):
+    logger.info("creating kafka consumer for intraday events")
     consumer = AIOKafkaConsumer(
         constants.INTRADAY_HIGH_EVENT,
         constants.INTRADAY_LOW_EVENT,
@@ -65,26 +97,35 @@ async def join(websocket):
     await consumer.start()  # type: ignore
     try:
         async for msg in consumer:
-            today = utils.datetime2datestr(utils.get_today())
-            topic = msg.topic
             if msg.value:
-                event = IntradayEvent.from_event_message(msg.value)
-                if utils.datetime2datestr(event.time) < today:
-                    logger.warning("skipping intraday event from previous day")
-                    continue
-                message = {
-                    "type": topic,
-                    "data": event.to_event_message(),
-                }
-                logger.info("sending message: %s", message)
-                await websocket.send(json.dumps(message))
+                await send_intraday_event(websocket, msg.topic, msg.value)
+    finally:
+        await consumer.stop()  # type: ignore
+
+
+async def consume_top_symbol_events(websocket):
+    logger.info("creating kafka consumer for top symbol events")
+    consumer = AIOKafkaConsumer(
+        constants.TOP_HIGH_EVENT,
+        constants.TOP_LOW_EVENT,
+        bootstrap_servers=constants.KAFKA_BOOTSTRAP_SERVERS,
+        value_deserializer=utils.bytes2object,
+        auto_offset_reset="earliest",
+    )
+    await consumer.start()  # type: ignore
+    try:
+        async for msg in consumer:
+            if msg.value:
+                await send_top_event(websocket, msg.topic, msg.value)
     finally:
         await consumer.stop()  # type: ignore
 
 
 async def handler(websocket):
-    print("new connection")
-    await join(websocket)  # type: ignore
+    logger.info("new connection")
+    intraday_task = asyncio.create_task(consume_intraday_events(websocket))
+    top_symbol_task = asyncio.create_task(consume_top_symbol_events(websocket))
+    await asyncio.gather(intraday_task, top_symbol_task)
 
 
 async def main():

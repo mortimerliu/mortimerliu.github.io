@@ -18,7 +18,7 @@
 }
 
 .table {
-    font-size: clamp(0.8rem, 1.5vw, 1rem);
+    font-size: clamp(0.5rem, 1.2vw, 1rem);
 }
 
 .table-hover>thead>tr>th {
@@ -29,4 +29,8 @@
 
 .table-hover>tbody>tr>td {
     background-color: #000000;
+}
+
+.top-number {
+    font-size: clamp(0.2rem, 1vw, 0.8rem);
 }
