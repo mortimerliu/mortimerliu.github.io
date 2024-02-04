@@ -30,6 +30,8 @@ CONTRACTS = [
 RAW_TICKER_EVENT = "raw_ticker"
 INTRADAY_HIGH_EVENT = "intraday_high"
 INTRADAY_LOW_EVENT = "intraday_low"
+TOP_HIGH_EVENT = "top_high"
+TOP_LOW_EVENT = "top_low"
 BUY_ORDER_EVENT = "buy_order"
 SELL_ORDER_EVENT = "sell_order"
 

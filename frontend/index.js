@@ -55,9 +55,37 @@ function onWebsocketMessage({ data }) {
         case "intraday_low":
             populateIntradayLow(event);
             break;
+        case "top_high":
+            populateTop(event, 'text-success', topHigh);
+            break;
+        case "top_low":
+            populateTop(event, 'text-danger', topLow);
+            break;
         default:
             console.log(`Unsupported event: ${name}, ${event}`);
     }
+}
+
+
+function populateTop(event, color, target) {
+    const allDiv = target.querySelectorAll('div');
+    for (let i = 0; i < allDiv.length; i++) {
+        populateTopSingle(event[i], color, allDiv[i]);
+    }
+}
+
+
+function populateTopSingle(item, color, div) {
+    const allP = div.querySelectorAll('p');
+    if (item === undefined) {
+        allP[0].textContent = '';
+        allP[1].textContent = '';
+        allP[2].textContent = '';
+        return
+    }
+    allP[0].textContent = item['symbol'];
+    allP[1].textContent = item['last'];
+    allP[2].textContent = `${(Math.round(item['gap'] * 10000) / 100).toFixed(2)}%`;;
 }
 
 
@@ -85,27 +113,6 @@ function populateStreamingRow(event, target, color, sign) {
     if (shouldScroll) {
         // scroll to bottom of the table
         target.parentElement.scrollTo(0, target.parentElement.scrollHeight);
-    }
-}
-
-
-function populateTopHigh(data, target) {
-    for (const item of data) {
-        const div = document.createElement('div');
-        div.className = 'col lh-1';
-        const stk = document.createElement('p');
-        const price = document.createElement('p');
-        const gap = document.createElement('p');
-        stk.textContent = item['stock'];
-        stk.className = 'm-0';
-        price.textContent = item['price'];
-        price.className = 'text-success m-0';
-        gap.textContent = `${item['gap'] * 100}%`;
-        gap.className = 'text-success m-0';
-        div.appendChild(stk);
-        div.appendChild(price);
-        div.appendChild(gap);
-        target.appendChild(div);
     }
 }
 
