@@ -3,7 +3,7 @@ from datetime import datetime
 from ib_insync import Ticker
 from dataclasses import dataclass
 
-from utc_datetime import UTCDateTime
+from real_time_trading.objects.utc_datetime import UTCDateTime
 import utils
 
 

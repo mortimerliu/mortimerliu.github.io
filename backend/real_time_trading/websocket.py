@@ -17,7 +17,7 @@ from datetime import datetime
 from collections import deque
 from collections import defaultdict
 from dataclasses import dataclass
-from ibapp import AsyncIBApp
+from real_time_trading.ib_app import AsyncIBApp
 from ib_insync import IB, util, Ticker
 from ib_insync.contract import Stock
 import utils
@@ -25,10 +25,10 @@ import utils
 from kafka import KafkaConsumer, KafkaProducer
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from handlers import RawTickerKafkaHandler, RawTickerFileHandler
-from intraday_ticker import IntradayEvent
-from top_symbol import TopNSymbols
+from real_time_trading.objects.intraday_ticker import IntradayEvent
+from real_time_trading.objects.top_symbol import TopNSymbols
 import constants
-from utc_datetime import UTCDateTime
+from real_time_trading.objects.utc_datetime import UTCDateTime
 
 logging.getLogger("kafka").setLevel(logging.INFO)
 logging.getLogger("aiokafka").setLevel(logging.INFO)

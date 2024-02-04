@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime, timezone, timedelta
-from real_time_trading.utc_datetime import UTCDateTime
+from real_time_trading.objects.utc_datetime import UTCDateTime
 
 UTC_UTCOFFSET = timedelta(hours=0)
 

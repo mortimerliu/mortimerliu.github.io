@@ -3,16 +3,19 @@ from typing import Dict, Optional
 import math
 from kafka import KafkaConsumer
 from kafka import KafkaProducer
-from raw_ticker import RawTicker
+from real_time_trading.objects.raw_ticker import RawTicker
 from ib_insync import Ticker
 from ib_insync.contract import Stock
 
 from datetime import datetime, timedelta
 import utils
-from utc_datetime import UTCDateTime
+from real_time_trading.objects.utc_datetime import UTCDateTime
 import constants
-from intraday_ticker import IntradayTicker, IntradayEvent
-from top_symbol import TopSymbol, TopNSymbols
+from real_time_trading.objects.intraday_ticker import (
+    IntradayTicker,
+    IntradayEvent,
+)
+from real_time_trading.objects.top_symbol import TopSymbol, TopNSymbols
 import logging
 
 logger = logging.getLogger(__name__)
@@ -37,7 +40,7 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 
 
-class RealTimeTrading:
+class Trader:
     def __init__(
         self,
         contracts: list[Stock],
@@ -183,5 +186,5 @@ class RealTimeTrading:
 
 if __name__ == "__main__":
     CONTRACTS = [Stock(**stk) for stk in constants.CONTRACTS]
-    rtt = RealTimeTrading(contracts=CONTRACTS, _bypass_update_window=True)
+    rtt = Trader(contracts=CONTRACTS, _bypass_update_window=True)
     rtt.consume()

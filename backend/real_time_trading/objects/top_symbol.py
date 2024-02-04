@@ -1,7 +1,7 @@
 from typing import Any
 from dataclasses import dataclass
-from intraday_ticker import IntradayTicker
-from utc_datetime import UTCDateTime
+from real_time_trading.objects.intraday_ticker import IntradayTicker
+from real_time_trading.objects.utc_datetime import UTCDateTime
 
 
 @dataclass

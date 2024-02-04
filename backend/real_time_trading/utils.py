@@ -2,7 +2,7 @@ from typing import Any, Optional, Tuple
 import os
 from datetime import datetime, timezone, timedelta
 import exchange_calendars as xcals
-from utc_datetime import UTCDateTime
+from real_time_trading.objects.utc_datetime import UTCDateTime
 import pickle
 
 

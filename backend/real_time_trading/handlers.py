@@ -6,7 +6,7 @@ from ib_insync import Ticker
 from kafka import KafkaProducer
 
 import utils
-from raw_ticker import RawTicker
+from real_time_trading.objects.raw_ticker import RawTicker
 
 
 logger = logging.getLogger(__name__)
