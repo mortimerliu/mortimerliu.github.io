@@ -80,6 +80,9 @@ class AsyncIBApp:
     def sleep(self, seconds: int):
         self._ib.sleep(seconds)
 
+    def is_connected(self):
+        return self._ib.isConnected()
+
 
 if __name__ == "__main__":
     CONTRACTS = [Stock(**stk) for stk in constants.CONTRACTS]
@@ -98,10 +101,19 @@ if __name__ == "__main__":
         ibapp.request_market_data(contracts=CONTRACTS, callbacks=HANDLERS)
 
     def on_disconnected():
-        logger.warning("ibapi disconnected from tws, sleeping for 5s...")
+        logger.warning("ibapi disconnected from tws")
         ibapp.sleep(5)
-        logger.warning("reconnecting...")
-        ibapp.connect()
+        while not ibapp.is_connected():
+            try:
+                logger.warning("reconnecting...")
+                ibapp.connect()
+            except ConnectionRefusedError as e:
+                logger.warning(
+                    "reconnect failed: %s, sleep for %s seconds",
+                    e,
+                    constants.SECONDS_BEFORE_RECONNECT,
+                )
+                ibapp.sleep(constants.SECONDS_BEFORE_RECONNECT)
 
     ibapp = AsyncIBApp(host="localhost", port=7496, client_id=1)
     ibapp.register_event_handler("connectedEvent", on_connected)
