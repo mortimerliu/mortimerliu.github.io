@@ -57,9 +57,9 @@ logger.addHandler(fh)
 async def send_intraday_event(websocket, topic, message):
     today = utils.datetime2datestr(utils.get_local_now())
     event = IntradayEvent.from_event_message(message)
-    # if utils.datetime2datestr(event.time.to_timezone()) < today:
-    #     logger.warning("skipping intraday event from previous day")
-    #     return
+    if utils.datetime2datestr(event.time.to_timezone()) < today:
+        logger.warning("skipping intraday event from previous day")
+        return
     message = {
         "type": topic,
         "data": event.to_event_message(),
@@ -73,9 +73,9 @@ async def send_top_event(websocket, topic, message):
     logger.debug("today: %s", today)
     event = TopNSymbols.from_message(message)
     logger.debug("event: %s", event)
-    # if utils.datetime2datestr(event.time.to_timezone()) < today:
-    #     logger.warning("skipping top event from previous day")
-    #     return
+    if utils.datetime2datestr(event.time.to_timezone()) < today:
+        logger.warning("skipping top event from previous day")
+        return
     message = {
         "type": topic,
         "data": event.to_message_only_data(),

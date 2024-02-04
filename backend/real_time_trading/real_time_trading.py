@@ -152,9 +152,9 @@ class RealTimeTrading:
         logger.debug("today: %s", today)
         raw_ticker = RawTicker.from_message(message.value)
         logger.debug("raw_ticker time: %s", raw_ticker.time.to_timezone())
-        # if utils.datetime2datestr(raw_ticker.time.to_timezone()) < today:
-        #     logger.warning("ticker is from previous day: %s", raw_ticker.time)
-        #     return
+        if utils.datetime2datestr(raw_ticker.time.to_timezone()) < today:
+            logger.warning("ticker is from previous day: %s", raw_ticker.time)
+            return
         if not self._bypass_update_window and not self.inside_update_window(
             raw_ticker.time
         ):
