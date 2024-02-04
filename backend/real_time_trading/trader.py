@@ -40,7 +40,7 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 
 
-class RealTimeTrading:
+class Trader:
     def __init__(
         self,
         contracts: list[Stock],
@@ -186,5 +186,5 @@ class RealTimeTrading:
 
 if __name__ == "__main__":
     CONTRACTS = [Stock(**stk) for stk in constants.CONTRACTS]
-    rtt = RealTimeTrading(contracts=CONTRACTS, _bypass_update_window=True)
+    rtt = Trader(contracts=CONTRACTS, _bypass_update_window=True)
     rtt.consume()

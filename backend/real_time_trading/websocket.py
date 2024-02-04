@@ -17,7 +17,7 @@ from datetime import datetime
 from collections import deque
 from collections import defaultdict
 from dataclasses import dataclass
-from ibapp import AsyncIBApp
+from real_time_trading.ib_app import AsyncIBApp
 from ib_insync import IB, util, Ticker
 from ib_insync.contract import Stock
 import utils
