@@ -25,10 +25,10 @@ import utils
 from kafka import KafkaConsumer, KafkaProducer
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from handlers import RawTickerKafkaHandler, RawTickerFileHandler
-from intraday_ticker import IntradayEvent
-from top_symbol import TopNSymbols
+from real_time_trading.objects.intraday_ticker import IntradayEvent
+from real_time_trading.objects.top_symbol import TopNSymbols
 import constants
-from utc_datetime import UTCDateTime
+from real_time_trading.objects.utc_datetime import UTCDateTime
 
 logging.getLogger("kafka").setLevel(logging.INFO)
 logging.getLogger("aiokafka").setLevel(logging.INFO)

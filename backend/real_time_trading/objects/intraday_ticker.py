@@ -20,9 +20,9 @@ from ib_insync import Ticker
 from ib_insync.contract import Stock
 
 from kafka import KafkaConsumer, KafkaProducer
-from utc_datetime import UTCDateTime
+from real_time_trading.objects.utc_datetime import UTCDateTime
 
-from raw_ticker import RawTicker
+from real_time_trading.objects.raw_ticker import RawTicker
 import utils
 import constants
 import logging
