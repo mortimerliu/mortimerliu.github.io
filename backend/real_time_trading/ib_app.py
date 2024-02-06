@@ -13,12 +13,11 @@ from ib_insync import IB
 from ib_insync import util
 from ib_insync.contract import Stock
 
+
 nest_asyncio.apply()
-
-
+util.logToConsole(logging.INFO)
 logging.getLogger("kafka").setLevel(logging.INFO)
 
-util.logToConsole(logging.INFO)
 
 formatter = logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s - %(message)s",

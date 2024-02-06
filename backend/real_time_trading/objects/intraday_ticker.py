@@ -11,9 +11,8 @@ from kafka import KafkaProducer
 from real_time_trading.objects.raw_ticker import RawTicker
 from real_time_trading.objects.utc_datetime import UTCDateTime
 
+
 nest_asyncio.apply()
-
-
 logger = logging.getLogger(__name__)
 
 

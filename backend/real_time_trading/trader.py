@@ -14,6 +14,7 @@ from real_time_trading.objects.raw_ticker import RawTicker
 from real_time_trading.objects.top_symbol import TopNSymbols
 from real_time_trading.objects.utc_datetime import UTCDateTime
 
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
