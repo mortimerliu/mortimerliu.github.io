@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from abc import ABC
 from abc import abstractmethod
-from typing import Any
 
 from ib_insync import Ticker
 from kafka import KafkaProducer
@@ -36,19 +35,18 @@ class RawTickerKafkaHandler(Handler):
             max_in_flight_requests_per_connection=1,
         )
 
-    def _ticker_to_kafka_message(self, ticker: Ticker) -> dict[str, Any]:
-        return RawTicker.from_ticker(ticker).to_message()
-
     def to_kafka(self, ticker: Ticker):
         assert ticker.contract is not None
         logger.info("sending ticker to kafka: %s", ticker.contract.symbol)
         if not hasattr(self, "_producer"):
             self._create_producer()
         assert ticker.contract is not None
+        raw_ticker = RawTicker.from_ticker(ticker)
         self._producer.send(
             self.topic,
             key=ticker.contract.symbol,
-            value=self._ticker_to_kafka_message(ticker),
+            value=raw_ticker.to_message(),
+            timestamp_ms=raw_ticker.time.timestamp_ms(),
         )
 
     def __call__(self, tickers: set[Ticker]):

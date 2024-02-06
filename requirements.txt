@@ -2,6 +2,7 @@ aiokakfa
 exchange_calendars
 ib_insync
 kafka-python
+nb_black
 nest_asyncio
 pre-commit
 pytest

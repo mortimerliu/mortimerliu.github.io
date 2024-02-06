@@ -129,6 +129,7 @@ class IntradayTicker:
                 constants.INTRADAY_HIGH_EVENT,
                 key=self.contract.symbol,
                 value=intraday_high.to_event_message(),
+                timestamp_ms=raw_ticker.time.timestamp_ms(),
             )
             logger.info("sending intraday high event")
             self.intraday_high = raw_ticker.last
@@ -146,6 +147,7 @@ class IntradayTicker:
                 constants.INTRADAY_LOW_EVENT,
                 key=self.contract.symbol,
                 value=intraday_low.to_event_message(),
+                timestamp_ms=raw_ticker.time.timestamp_ms(),
             )
             logger.info("sending intraday low event")
             self.intraday_low = raw_ticker.last

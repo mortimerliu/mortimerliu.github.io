@@ -140,6 +140,7 @@ class Trader:
             self._top_symbol_producer.send(
                 constants.TOP_HIGH_EVENT,
                 value=self.top_n_symbols.to_message(),
+                timestamp_ms=time.timestamp_ms(),
             )
             logger.info("sending top high event")
         bottom_n_symbols = self.get_bottom_n_tickers(
@@ -155,6 +156,7 @@ class Trader:
             self._top_symbol_producer.send(
                 constants.TOP_LOW_EVENT,
                 value=self.bottom_n_symbols.to_message(),
+                timestamp_ms=time.timestamp_ms(),
             )
             logger.info("sending top low event")
 
