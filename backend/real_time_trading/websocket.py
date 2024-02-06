@@ -1,34 +1,21 @@
 # import nest_asyncio
-
 # nest_asyncio.apply()
+from __future__ import annotations
 
-from typing import Any, ClassVar, Optional, Set
-from abc import ABC, abstractmethod
-
+import asyncio
+import json
+import logging
 import os
 import signal
-import json
-import time
-import threading
-import logging
-import asyncio
-import websockets
-from datetime import datetime
-from collections import deque
-from collections import defaultdict
-from dataclasses import dataclass
-from real_time_trading.ib_app import AsyncIBApp
-from ib_insync import IB, util, Ticker
-from ib_insync.contract import Stock
-import utils
 
-from kafka import KafkaConsumer, KafkaProducer
-from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
-from handlers import RawTickerKafkaHandler, RawTickerFileHandler
+import constants
+import utils
+import websockets
+from aiokafka import AIOKafkaConsumer
+from ib_insync.contract import Stock
 from real_time_trading.objects.intraday_ticker import IntradayEvent
 from real_time_trading.objects.top_symbol import TopNSymbols
-import constants
-from real_time_trading.objects.utc_datetime import UTCDateTime
+
 
 logging.getLogger("kafka").setLevel(logging.INFO)
 logging.getLogger("aiokafka").setLevel(logging.INFO)
@@ -38,7 +25,7 @@ logging.getLogger("websockets").setLevel(logging.INFO)
 CONTRACTS = [Stock(**stk) for stk in constants.CONTRACTS]
 
 formatter = logging.Formatter(
-    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

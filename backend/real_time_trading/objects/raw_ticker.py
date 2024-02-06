@@ -1,10 +1,10 @@
-from typing import Any
-from datetime import datetime
-from ib_insync import Ticker
-from dataclasses import dataclass
+from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Any
+
+from ib_insync import Ticker
 from real_time_trading.objects.utc_datetime import UTCDateTime
-import utils
 
 
 @dataclass
@@ -25,7 +25,7 @@ class RawTicker:
         }
 
     @staticmethod
-    def from_message(message: dict[str, Any]) -> "RawTicker":
+    def from_message(message: dict[str, Any]) -> RawTicker:
         return RawTicker(
             symbol=message["symbol"],
             last=message["last"],
@@ -35,7 +35,7 @@ class RawTicker:
         )
 
     @staticmethod
-    def from_ticker(ticker: Ticker) -> "RawTicker":
+    def from_ticker(ticker: Ticker) -> RawTicker:
         assert ticker.contract is not None
         assert ticker.time is not None
         return RawTicker(

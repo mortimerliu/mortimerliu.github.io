@@ -1,5 +1,9 @@
 # list of contracts to be monitored
-CONTRACTS = [
+from __future__ import annotations
+
+CONTRACT_TYPE = dict[str, str]
+
+CONTRACTS: list[CONTRACT_TYPE] = [
     {
         "symbol": "AAPL",
         "exchange": "SMART",
@@ -27,22 +31,22 @@ CONTRACTS = [
     },
 ]
 
-RAW_TICKER_EVENT = "raw_ticker"
-INTRADAY_HIGH_EVENT = "intraday_high"
-INTRADAY_LOW_EVENT = "intraday_low"
-TOP_HIGH_EVENT = "top_high"
-TOP_LOW_EVENT = "top_low"
-BUY_ORDER_EVENT = "buy_order"
-SELL_ORDER_EVENT = "sell_order"
+RAW_TICKER_EVENT: str = "raw_ticker"
+INTRADAY_HIGH_EVENT: str = "intraday_high"
+INTRADAY_LOW_EVENT: str = "intraday_low"
+TOP_HIGH_EVENT: str = "top_high"
+TOP_LOW_EVENT: str = "top_low"
+BUY_ORDER_EVENT: str = "buy_order"
+SELL_ORDER_EVENT: str = "sell_order"
 
-KAFKA_HOST = "localhost"
-KAFKA_PORT = 9092
-KAFKA_BOOTSTRAP_SERVERS = f"{KAFKA_HOST}:{KAFKA_PORT}"
+KAFKA_HOST: str = "localhost"
+KAFKA_PORT: int = 9092
+KAFKA_BOOTSTRAP_SERVERS: str = f"{KAFKA_HOST}:{KAFKA_PORT}"
 
+ROOT_DIR: str = "~/src/real-time-trading"
 
-IBAPP_LOG_FILE = "logs/ibapp.log"
-RTT_LOG_FILE = "logs/real_time_trading.log"
-APP_LOG_FILE = "logs/app.log"
+IBAPP_LOG_FILE: str = f"{ROOT_DIR}/logs/ibapp.log"
+RTT_LOG_FILE: str = f"{ROOT_DIR}/logs/real_time_trading.log"
+APP_LOG_FILE: str = f"{ROOT_DIR}/logs/app.log"
 
-
-SECONDS_BEFORE_RECONNECT = 20
+SECONDS_BEFORE_RECONNECT: int = 20

@@ -1,5 +1,12 @@
-from typing import Optional
-from datetime import datetime, timedelta, timezone, tzinfo
+from __future__ import annotations
+
+import logging
+from datetime import datetime
+from datetime import timezone
+from datetime import tzinfo
+
+
+logger = logging.getLogger(__name__)
 
 
 class UTCDateTime(datetime):
@@ -43,8 +50,9 @@ class UTCDateTime(datetime):
     def is_utc_tzinfo(tzinfo: tzinfo) -> bool:
         return tzinfo.utcoffset(None) == timezone.utc.utcoffset(None)
 
-    @staticmethod
-    def now() -> "UTCDateTime":
+    @classmethod
+    def now(cls, tz: tzinfo | None = None) -> UTCDateTime:
+        logger.warning("UTCDateTime is always in UTC, ignoring tz")
         return UTCDateTime.from_timezone_naive(datetime.utcnow())
 
     # TODO: refactor this out of the class
@@ -53,11 +61,12 @@ class UTCDateTime(datetime):
         return dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None
 
     @classmethod
-    def from_timezone_naive(cls, dt: datetime) -> "UTCDateTime":
+    def from_timezone_naive(cls, dt: datetime) -> UTCDateTime:
         """For timezone naive datetime, assume it is in UTC."""
         if cls.is_timezone_aware(dt):
             raise ValueError(
-                "datetime must be timezone naivel, use from_timezone_aware instead"
+                "datetime must be timezone naivel, "
+                "use from_timezone_aware instead",
             )
         return UTCDateTime(
             dt.year,
@@ -71,11 +80,12 @@ class UTCDateTime(datetime):
         )
 
     @classmethod
-    def from_timezone_aware(cls, dt: datetime) -> "UTCDateTime":
+    def from_timezone_aware(cls, dt: datetime) -> UTCDateTime:
         """Convert timezone aware datetime to UTC."""
         if not cls.is_timezone_aware(dt):
             raise ValueError(
-                "datetime must be timezone aware, use from_timezone_naive instead"
+                "datetime must be timezone aware, "
+                "use from_timezone_naive instead",
             )
         return UTCDateTime(
             dt.year,
@@ -89,7 +99,7 @@ class UTCDateTime(datetime):
         )
 
     @classmethod
-    def from_utc(cls, dt: datetime) -> "UTCDateTime":
+    def from_utc(cls, dt: datetime) -> UTCDateTime:
         """Convert datetime that is already in UTC to UTCDateTime.
         The datetime may or may not be timezone aware.
         """
@@ -100,7 +110,7 @@ class UTCDateTime(datetime):
         return cls.from_timezone_naive(dt)
 
     @classmethod
-    def from_isoformat(cls, s: str) -> "UTCDateTime":
+    def from_isoformat(cls, s: str) -> UTCDateTime:
         dt = datetime.fromisoformat(s)
         if cls.is_timezone_aware(dt):
             return cls.from_timezone_aware(dt)
@@ -109,7 +119,7 @@ class UTCDateTime(datetime):
     def to_isoforamt(self) -> str:
         return self.isoformat()
 
-    def to_timezone(self, tz: Optional[timezone] = None) -> datetime:
+    def to_timezone(self, tz: timezone | None = None) -> datetime:
         dt = datetime(
             self.year,
             self.month,

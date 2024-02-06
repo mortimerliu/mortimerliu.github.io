@@ -1,25 +1,27 @@
+from __future__ import annotations
+
+import logging
+from typing import Callable
+
+import constants
 import nest_asyncio
+from eventkit import Event
+from handlers import Handler
+from handlers import RawTickerFileHandler
+from handlers import RawTickerKafkaHandler
+from ib_insync import IB
+from ib_insync import util
+from ib_insync.contract import Stock
 
 nest_asyncio.apply()
 
-
-from abc import ABC, abstractmethod
-import pickle
-import logging
-from typing import List, Set, Callable
-from eventkit import Event
-from ib_insync import IB, util, Ticker
-from ib_insync.contract import Stock
-
-import constants
-from handlers import Handler, RawTickerKafkaHandler, RawTickerFileHandler
 
 logging.getLogger("kafka").setLevel(logging.INFO)
 
 util.logToConsole(logging.INFO)
 
 formatter = logging.Formatter(
-    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
 logger = logging.getLogger(__name__)
@@ -48,14 +50,18 @@ class AsyncIBApp:
 
     def connect(self):
         self._ib.connect(
-            host=self.host, port=self.port, clientId=self.client_id
+            host=self.host,
+            port=self.port,
+            clientId=self.client_id,
         )
 
     def disconnect(self):
         self._ib.disconnect()
 
     def request_market_data(
-        self, contracts: List[Stock], callbacks: List[Handler]
+        self,
+        contracts: list[Stock],
+        callbacks: list[Handler],
     ):
         for contract in contracts:
             self._ib.reqMktData(
@@ -87,10 +93,10 @@ class AsyncIBApp:
 if __name__ == "__main__":
     CONTRACTS = [Stock(**stk) for stk in constants.CONTRACTS]
     raw_ticker_kafka_handler = RawTickerKafkaHandler(
-        topic=constants.RAW_TICKER_EVENT
+        topic=constants.RAW_TICKER_EVENT,
     )
     raw_ticker_file_handler = RawTickerFileHandler(directory="data/raw_ticker")
-    HANDLERS: List[Handler] = [
+    HANDLERS: list[Handler] = [
         raw_ticker_kafka_handler,
         raw_ticker_file_handler,
     ]

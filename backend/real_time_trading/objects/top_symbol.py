@@ -1,5 +1,8 @@
-from typing import Any
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import Any
+
 from real_time_trading.objects.intraday_ticker import IntradayTicker
 from real_time_trading.objects.utc_datetime import UTCDateTime
 
@@ -18,7 +21,7 @@ class TopSymbol:
         }
 
     @staticmethod
-    def from_event_message(message: dict[str, Any]) -> "TopSymbol":
+    def from_event_message(message: dict[str, Any]) -> TopSymbol:
         return TopSymbol(
             symbol=message["symbol"],
             last=message["last"],
@@ -26,14 +29,16 @@ class TopSymbol:
         )
 
     @staticmethod
-    def from_ticker(ticker: IntradayTicker) -> "TopSymbol":
+    def from_ticker(ticker: IntradayTicker) -> TopSymbol:
         return TopSymbol(
             symbol=ticker.contract.symbol,
             last=ticker.last_price,
             gap=ticker.gap,
         )
 
-    def __eq__(self, value: "TopSymbol") -> bool:
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, TopSymbol):
+            return False
         return (
             self.symbol == value.symbol
             and self.last == value.last
@@ -56,7 +61,7 @@ class TopNSymbols:
         return [s.to_event_message() for s in self.symbols]
 
     @staticmethod
-    def from_message(message: dict[str, Any]) -> "TopNSymbols":
+    def from_message(message: dict[str, Any]) -> TopNSymbols:
         return TopNSymbols(
             time=message["time"],
             top_symbols=[
@@ -66,9 +71,12 @@ class TopNSymbols:
 
     @staticmethod
     def from_tickers(
-        time: UTCDateTime, tickers: list[IntradayTicker]
-    ) -> "TopNSymbols":
+        time: UTCDateTime,
+        tickers: list[IntradayTicker],
+    ) -> TopNSymbols:
         return TopNSymbols(time, [TopSymbol.from_ticker(t) for t in tickers])
 
-    def __eq__(self, value: "TopNSymbols") -> bool:
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, TopNSymbols):
+            return False
         return self.symbols == value.symbols

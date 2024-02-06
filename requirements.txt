@@ -1,7 +1,8 @@
-websockets
-nest_asyncio
-ib_insync
-exchange_calendars
-kafka-python
 aiokakfa
+exchange_calendars
+ib_insync
+kafka-python
+nest_asyncio
+pre-commit
 pytest
+websockets
