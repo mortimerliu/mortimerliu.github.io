@@ -81,6 +81,7 @@ async def consume_intraday_events(websocket):
         value_deserializer=utils.bytes2object,
         auto_offset_reset="earliest",
     )
+    utils.set_offsets_by_time(consumer)
     await consumer.start()  # type: ignore
     try:
         async for msg in consumer:
@@ -99,6 +100,7 @@ async def consume_top_symbol_events(websocket):
         value_deserializer=utils.bytes2object,
         auto_offset_reset="earliest",
     )
+    utils.set_offsets_by_time(consumer)
     await consumer.start()  # type: ignore
     try:
         async for msg in consumer:

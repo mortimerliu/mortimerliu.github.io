@@ -5,9 +5,15 @@ import pickle
 from datetime import datetime
 from datetime import timezone
 from typing import Any
+from typing import Union
 
 import exchange_calendars as xcals
+from aiokafka import AIOKafkaConsumer
+from kafka import KafkaConsumer
 from real_time_trading.objects.utc_datetime import UTCDateTime
+
+
+_KafkaConsumer = Union[KafkaConsumer, AIOKafkaConsumer]
 
 
 def camel_to_snake(name: str) -> str:
@@ -99,3 +105,23 @@ def get_market_open_close(
 def get_local_now() -> datetime:
     """get the current time in local timezone"""
     return datetime.now().astimezone()
+
+
+def set_offsets_by_time(
+    consumer: _KafkaConsumer, start_time: UTCDateTime | None = None,
+):
+    if start_time is None:
+        local_now = get_local_now()
+        start_time = UTCDateTime(
+            local_now.year,
+            local_now.month,
+            local_now.day,
+            tzinfo=local_now.tzinfo,
+        )
+    partitions = consumer.assignment()
+    partition_to_timestamp = {
+        part: start_time.timestamp_ms() for part in partitions
+    }
+    mapping = consumer.offsets_for_times(partition_to_timestamp)
+    for partition, ts in mapping.items():  # type: ignore
+        consumer.seek(partition, ts[0])
