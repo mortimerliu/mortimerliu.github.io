@@ -1,11 +1,13 @@
-from abc import ABC, abstractmethod
-from typing import Set, Optional, Any
+from __future__ import annotations
 
 import logging
+from abc import ABC
+from abc import abstractmethod
+from typing import Any
+
 from ib_insync import Ticker
 from kafka import KafkaProducer
-
-import utils
+from real_time_trading import utils
 from real_time_trading.objects.raw_ticker import RawTicker
 
 
@@ -14,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class Handler(ABC):
     @abstractmethod
-    def __call__(self, tickers: Set[Ticker]):
+    def __call__(self, tickers: set[Ticker]):
         raise NotImplementedError
 
 
@@ -49,7 +51,7 @@ class RawTickerKafkaHandler(Handler):
             value=self._ticker_to_kafka_message(ticker),
         )
 
-    def __call__(self, tickers: Set[Ticker]):
+    def __call__(self, tickers: set[Ticker]):
         for ticker in tickers:
             self.to_kafka(ticker)
 
@@ -60,7 +62,7 @@ class RawTickerFileHandler(Handler):
     def __init__(
         self,
         directory: str,
-        filename_prefix: Optional[str] = None,
+        filename_prefix: str | None = None,
         mode: str = "a",
     ):
         self.directory = directory
@@ -71,12 +73,13 @@ class RawTickerFileHandler(Handler):
         prefix = self.filename_prefix
         if not prefix:
             today = utils.datetime2datestr(
-                utils.get_local_now(), format="%Y%m%d"
+                utils.get_local_now(),
+                format="%Y%m%d",
             )
             prefix = f"raw_ticker_{today}"
         return f"{self.directory}/{prefix}_{symbol}.txt"
 
-    def __call__(self, tickers: Set[Ticker]):
+    def __call__(self, tickers: set[Ticker]):
         for ticker in tickers:
             assert ticker.contract is not None
             filename = self._get_filename(ticker.contract.symbol)

@@ -1,22 +1,19 @@
-from typing import Dict, Optional
+from __future__ import annotations
 
+import logging
 import math
+from datetime import timedelta
+
+from ib_insync.contract import Stock
 from kafka import KafkaConsumer
 from kafka import KafkaProducer
+from real_time_trading import constants
+from real_time_trading import utils
+from real_time_trading.objects.intraday_ticker import IntradayTicker
 from real_time_trading.objects.raw_ticker import RawTicker
-from ib_insync import Ticker
-from ib_insync.contract import Stock
-
-from datetime import datetime, timedelta
-import utils
+from real_time_trading.objects.top_symbol import TopNSymbols
 from real_time_trading.objects.utc_datetime import UTCDateTime
-import constants
-from real_time_trading.objects.intraday_ticker import (
-    IntradayTicker,
-    IntradayEvent,
-)
-from real_time_trading.objects.top_symbol import TopSymbol, TopNSymbols
-import logging
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -24,7 +21,7 @@ logger.setLevel(logging.DEBUG)
 logging.getLogger("kafka").setLevel(logging.DEBUG)
 
 formatter = logging.Formatter(
-    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
 logger = logging.getLogger(__name__)
@@ -77,7 +74,7 @@ class Trader:
             max_in_flight_requests_per_connection=1,
         )
 
-        self.tickers: Dict[str, IntradayTicker] = {}
+        self.tickers: dict[str, IntradayTicker] = {}
         for contract in contracts:
             self.tickers[contract.symbol] = IntradayTicker(
                 contract=contract,
@@ -88,8 +85,8 @@ class Trader:
         self.bake_out_minutes = bake_out_minutes
         self.n_top_tickers = n_top_tickers
         self.n_bottom_tickers = n_bottom_tickers
-        self.top_n_symbols: Optional[TopNSymbols] = None
-        self.bottom_n_symbols: Optional[TopNSymbols] = None
+        self.top_n_symbols: TopNSymbols | None = None
+        self.bottom_n_symbols: TopNSymbols | None = None
         self._bypass_update_window = _bypass_update_window
 
     def inside_update_window(self, dt: UTCDateTime) -> bool:
@@ -98,7 +95,7 @@ class Trader:
             return False
         open_after_bake_in = open_ + timedelta(minutes=self.bake_in_minutes)
         close_before_bake_out = close - timedelta(
-            minutes=self.bake_out_minutes
+            minutes=self.bake_out_minutes,
         )
         return dt >= open_after_bake_in and dt < close_before_bake_out
 
@@ -108,25 +105,35 @@ class Trader:
         return tickers
 
     def get_top_n_tickers(
-        self, time: UTCDateTime, tickers: list[IntradayTicker], n: int
+        self,
+        time: UTCDateTime,
+        tickers: list[IntradayTicker],
+        n: int,
     ) -> TopNSymbols:
         """Return top n tickers by gap with a positive gap"""
         return TopNSymbols.from_tickers(
-            time, [t for t in tickers if t.gap > 0][:n]
+            time,
+            [t for t in tickers if t.gap > 0][:n],
         )
 
     def get_bottom_n_tickers(
-        self, time: UTCDateTime, tickers: list[IntradayTicker], n: int
+        self,
+        time: UTCDateTime,
+        tickers: list[IntradayTicker],
+        n: int,
     ) -> TopNSymbols:
         """Return bottom n tickers by gap with a negative gap"""
         return TopNSymbols.from_tickers(
-            time, [t for t in tickers if t.gap < 0][:n]
+            time,
+            [t for t in tickers if t.gap < 0][:n],
         )
 
     def _check_top_symbols(self, time: UTCDateTime):
         tickers = self.rank_tickers()
         top_n_symbols = self.get_top_n_tickers(
-            time, tickers, self.n_top_tickers
+            time,
+            tickers,
+            self.n_top_tickers,
         )
         if self.top_n_symbols is None or top_n_symbols != self.top_n_symbols:
             self.top_n_symbols = top_n_symbols
@@ -136,7 +143,9 @@ class Trader:
             )
             logger.info("sending top high event")
         bottom_n_symbols = self.get_bottom_n_tickers(
-            time, tickers, self.n_bottom_tickers
+            time,
+            tickers,
+            self.n_bottom_tickers,
         )
         if (
             self.bottom_n_symbols is None
@@ -159,10 +168,11 @@ class Trader:
             logger.warning("ticker is from previous day: %s", raw_ticker.time)
             return
         if not self._bypass_update_window and not self.inside_update_window(
-            raw_ticker.time
+            raw_ticker.time,
         ):
             logger.warning(
-                "ticker is outside update window: %s", raw_ticker.time
+                "ticker is outside update window: %s",
+                raw_ticker.time,
             )
             return
         if math.isnan(raw_ticker.last):
@@ -171,7 +181,8 @@ class Trader:
         intraday_ticker = self.tickers.get(raw_ticker.symbol)
         if intraday_ticker is None:
             logger.warning(
-                "ticker not found for symbol: %s", raw_ticker.symbol
+                "ticker not found for symbol: %s",
+                raw_ticker.symbol,
             )
             return
         updated = intraday_ticker.update(raw_ticker)

@@ -1,14 +1,18 @@
-from typing import Any, Optional, Tuple
+from __future__ import annotations
+
 import os
-from datetime import datetime, timezone, timedelta
+import pickle
+from datetime import datetime
+from datetime import timezone
+from typing import Any
+
 import exchange_calendars as xcals
 from real_time_trading.objects.utc_datetime import UTCDateTime
-import pickle
 
 
 def camel_to_snake(name: str) -> str:
     return "".join(
-        ["_" + c.lower() if c.isupper() else c for c in name]
+        ["_" + c.lower() if c.isupper() else c for c in name],
     ).lstrip("_")
 
 
@@ -73,8 +77,8 @@ def is_core_market_minutes(dt: UTCDateTime) -> bool:
 
 
 def get_market_open_close(
-    dt: Optional[UTCDateTime] = None,
-) -> Tuple[Optional[UTCDateTime], Optional[UTCDateTime]]:
+    dt: UTCDateTime | None = None,
+) -> tuple[UTCDateTime | None, UTCDateTime | None]:
     """Get the open and close times for the NASDAQ market on a given datetime.
     open is inclusive, close is exclusive.
 

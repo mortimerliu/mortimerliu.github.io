@@ -1,33 +1,18 @@
-import nest_asyncio
+from __future__ import annotations
 
-nest_asyncio.apply()
-
-from typing import Any, ClassVar, Optional
-from abc import ABC, abstractmethod
-
-import os
-import signal
-import json
-import time
-import threading
-import asyncio
-import websockets
-from datetime import datetime
-from collections import deque
-from collections import defaultdict
+import logging
 from dataclasses import dataclass
-from ib_insync import Ticker
-from ib_insync.contract import Stock
+from typing import Any
 
-from kafka import KafkaConsumer, KafkaProducer
+import constants
+import nest_asyncio
+from ib_insync.contract import Stock
+from kafka import KafkaProducer
+from real_time_trading.objects.raw_ticker import RawTicker
 from real_time_trading.objects.utc_datetime import UTCDateTime
 
-from real_time_trading.objects.raw_ticker import RawTicker
-import utils
-import constants
-import logging
 
-
+nest_asyncio.apply()
 logger = logging.getLogger(__name__)
 
 
@@ -40,7 +25,7 @@ class IntradayEvent:
     count: int
 
     @staticmethod
-    def from_event_message(message: dict[str, Any]) -> "IntradayEvent":
+    def from_event_message(message: dict[str, Any]) -> IntradayEvent:
         return IntradayEvent(
             time=UTCDateTime.from_isoformat(message["time"]),
             symbol=message["symbol"],
