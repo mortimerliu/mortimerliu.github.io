@@ -15,16 +15,14 @@ from real_time_trading.objects.top_symbol import TopNSymbols
 from real_time_trading.objects.utc_datetime import UTCDateTime
 
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-logging.getLogger("kafka").setLevel(logging.DEBUG)
+logging.getLogger("kafka").setLevel(logging.WARN)
 
 formatter = logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)

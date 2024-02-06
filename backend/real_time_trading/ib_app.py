@@ -94,7 +94,9 @@ if __name__ == "__main__":
     raw_ticker_kafka_handler = RawTickerKafkaHandler(
         topic=constants.RAW_TICKER_EVENT,
     )
-    raw_ticker_file_handler = RawTickerFileHandler(directory="data/raw_ticker")
+    raw_ticker_file_handler = RawTickerFileHandler(
+        directory=constants.DATA_DIR,
+    )
     HANDLERS: list[Handler] = [
         raw_ticker_kafka_handler,
         raw_ticker_file_handler,
