@@ -63,7 +63,7 @@ class TopNSymbols:
     @staticmethod
     def from_message(message: dict[str, Any]) -> TopNSymbols:
         return TopNSymbols(
-            time=message["time"],
+            time=UTCDateTime.from_isoformat(message["time"]),
             top_symbols=[
                 TopSymbol.from_event_message(m) for m in message["data"]
             ],

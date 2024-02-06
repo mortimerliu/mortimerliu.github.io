@@ -15,16 +15,14 @@ from real_time_trading.objects.top_symbol import TopNSymbols
 from real_time_trading.objects.utc_datetime import UTCDateTime
 
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-logging.getLogger("kafka").setLevel(logging.DEBUG)
+logging.getLogger("kafka").setLevel(logging.WARN)
 
 formatter = logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
@@ -41,6 +39,7 @@ class Trader:
     def __init__(
         self,
         contracts: list[Stock],
+        start_time: UTCDateTime | None = None,
         bake_in_minutes: int = 0,
         bake_out_minutes: int = 0,
         n_top_tickers: int = 4,
@@ -55,6 +54,9 @@ class Trader:
             value_deserializer=utils.bytes2object,
             auto_offset_reset="earliest",
         )
+        # set up consumer to start from start_time
+        utils.set_offsets_by_time(self._consumer, start_time)
+
         # shared producer for all tickers
         self._intraday_producer = KafkaProducer(
             bootstrap_servers=constants.KAFKA_BOOTSTRAP_SERVERS,
@@ -140,6 +142,7 @@ class Trader:
             self._top_symbol_producer.send(
                 constants.TOP_HIGH_EVENT,
                 value=self.top_n_symbols.to_message(),
+                timestamp_ms=time.timestamp_ms(),
             )
             logger.info("sending top high event")
         bottom_n_symbols = self.get_bottom_n_tickers(
@@ -155,6 +158,7 @@ class Trader:
             self._top_symbol_producer.send(
                 constants.TOP_LOW_EVENT,
                 value=self.bottom_n_symbols.to_message(),
+                timestamp_ms=time.timestamp_ms(),
             )
             logger.info("sending top low event")
 
@@ -197,5 +201,9 @@ class Trader:
 
 if __name__ == "__main__":
     CONTRACTS = [Stock(**stk) for stk in constants.CONTRACTS]
-    rtt = Trader(contracts=CONTRACTS, _bypass_update_window=True)
+    rtt = Trader(
+        contracts=CONTRACTS,
+        start_time=None,
+        _bypass_update_window=True,
+    )
     rtt.consume()

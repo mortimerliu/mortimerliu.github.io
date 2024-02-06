@@ -43,10 +43,12 @@ KAFKA_HOST: str = "localhost"
 KAFKA_PORT: int = 9092
 KAFKA_BOOTSTRAP_SERVERS: str = f"{KAFKA_HOST}:{KAFKA_PORT}"
 
-ROOT_DIR: str = "~/src/real-time-trading"
+ROOT_DIR: str = "/home/hongruliu/src/real-time-trading"
 
 IBAPP_LOG_FILE: str = f"{ROOT_DIR}/logs/ibapp.log"
 RTT_LOG_FILE: str = f"{ROOT_DIR}/logs/real_time_trading.log"
 APP_LOG_FILE: str = f"{ROOT_DIR}/logs/app.log"
+
+DATA_DIR: str = f"{ROOT_DIR}/data/raw_ticker"
 
 SECONDS_BEFORE_RECONNECT: int = 20

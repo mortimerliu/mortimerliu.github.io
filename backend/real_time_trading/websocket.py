@@ -27,7 +27,8 @@ CONTRACTS = [Stock(**stk) for stk in constants.CONTRACTS]
 formatter = logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
-logger = logging.getLogger(__name__)
+
+logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 ch = logging.StreamHandler()
@@ -82,6 +83,7 @@ async def consume_intraday_events(websocket):
         auto_offset_reset="earliest",
     )
     await consumer.start()  # type: ignore
+    await utils.set_offsets_by_time_aiokafka(consumer)
     try:
         async for msg in consumer:
             if msg.value:
@@ -100,6 +102,7 @@ async def consume_top_symbol_events(websocket):
         auto_offset_reset="earliest",
     )
     await consumer.start()  # type: ignore
+    await utils.set_offsets_by_time_aiokafka(consumer)
     try:
         async for msg in consumer:
             if msg.value:

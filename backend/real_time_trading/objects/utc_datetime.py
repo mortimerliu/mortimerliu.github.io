@@ -52,7 +52,8 @@ class UTCDateTime(datetime):
 
     @classmethod
     def now(cls, tz: tzinfo | None = None) -> UTCDateTime:
-        logger.warning("UTCDateTime is always in UTC, ignoring tz")
+        if tz is not None:
+            logger.warning("UTCDateTime is always in UTC, ignoring tz")
         return UTCDateTime.from_timezone_naive(datetime.utcnow())
 
     # TODO: refactor this out of the class
@@ -99,6 +100,11 @@ class UTCDateTime(datetime):
         )
 
     @classmethod
+    def from_timestamp(cls, timestamp: float) -> UTCDateTime:
+        dt = datetime.utcfromtimestamp(timestamp)
+        return cls.from_timezone_naive(dt)
+
+    @classmethod
     def from_utc(cls, dt: datetime) -> UTCDateTime:
         """Convert datetime that is already in UTC to UTCDateTime.
         The datetime may or may not be timezone aware.
@@ -134,3 +140,6 @@ class UTCDateTime(datetime):
 
     def __str__(self):
         return self.isoformat()
+
+    def timestamp_ms(self) -> int:
+        return int(self.timestamp() * 1000)
