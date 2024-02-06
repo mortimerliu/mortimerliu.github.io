@@ -8,11 +8,11 @@ import logging
 import os
 import signal
 
-import constants
-import utils
 import websockets
 from aiokafka import AIOKafkaConsumer
 from ib_insync.contract import Stock
+from real_time_trading import constants
+from real_time_trading import utils
 from real_time_trading.objects.intraday_ticker import IntradayEvent
 from real_time_trading.objects.top_symbol import TopNSymbols
 

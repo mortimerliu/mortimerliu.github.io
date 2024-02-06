@@ -5,9 +5,9 @@ from abc import ABC
 from abc import abstractmethod
 from typing import Any
 
-import utils
 from ib_insync import Ticker
 from kafka import KafkaProducer
+from real_time_trading import utils
 from real_time_trading.objects.raw_ticker import RawTicker
 
 

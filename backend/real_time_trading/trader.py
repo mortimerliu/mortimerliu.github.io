@@ -4,11 +4,11 @@ import logging
 import math
 from datetime import timedelta
 
-import constants
-import utils
 from ib_insync.contract import Stock
 from kafka import KafkaConsumer
 from kafka import KafkaProducer
+from real_time_trading import constants
+from real_time_trading import utils
 from real_time_trading.objects.intraday_ticker import IntradayTicker
 from real_time_trading.objects.raw_ticker import RawTicker
 from real_time_trading.objects.top_symbol import TopNSymbols

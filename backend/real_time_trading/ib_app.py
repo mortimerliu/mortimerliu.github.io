@@ -3,15 +3,15 @@ from __future__ import annotations
 import logging
 from typing import Callable
 
-import constants
 import nest_asyncio
 from eventkit import Event
-from handlers import Handler
-from handlers import RawTickerFileHandler
-from handlers import RawTickerKafkaHandler
 from ib_insync import IB
 from ib_insync import util
 from ib_insync.contract import Stock
+from real_time_trading import constants
+from real_time_trading.handlers import Handler
+from real_time_trading.handlers import RawTickerFileHandler
+from real_time_trading.handlers import RawTickerKafkaHandler
 
 
 nest_asyncio.apply()
