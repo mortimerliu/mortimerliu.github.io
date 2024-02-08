@@ -50,7 +50,7 @@ async def send_intraday_event(websocket, topic, message):
         return
     message = {
         "type": topic,
-        "data": event.to_event_message(),
+        "data": event.to_event_message(local_time=True),
     }
     logger.info("sending message: %s", message)
     await websocket.send(json.dumps(message))

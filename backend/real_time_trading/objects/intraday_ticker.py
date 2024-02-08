@@ -34,9 +34,13 @@ class IntradayEvent:
             count=message.get("count", -1),
         )
 
-    def to_event_message(self) -> dict[str, Any]:
+    def to_event_message(self, local_time: bool = False) -> dict[str, Any]:
+        if local_time:
+            time_str = self.time.to_timezone().isoformat()
+        else:
+            time_str = self.time.to_isoforamt()
         return {
-            "time": self.time.to_isoforamt(),
+            "time": time_str,
             "symbol": self.symbol,
             "price": self.price,
             "gap": self.gap,
