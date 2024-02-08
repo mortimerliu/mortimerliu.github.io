@@ -1,18 +1,12 @@
 // constants
-// const UP_EMPTY = '\u25B3\u25B3\u25B3'
-// const UP_SOLID = '\u25B2\u25B2\u25B2'
 const UP_EMPTY = '\u25B5\u25B5\u25B5'
 const UP_SOLID = '\u25B4\u25B4\u25B4'
-// const DN_EMPTY = '\u25BD\u25BD\u25BD'
-// const DN_SOLID = '\u25BC\u25BC\u25BC'
 const DN_EMPTY = '\u25BF\u25BF\u25BF'
 const DN_SOLID = '\u25BE\u25BE\u25BE'
 const ROW_LIMIT = 10000;
 
 // states
 let shouldScroll = true;
-// let buyStreamingRows = [];
-// let sellStreamingRows = [];
 
 // query all needed elements
 const timeP = document.querySelector('#time');
