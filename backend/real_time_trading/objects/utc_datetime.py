@@ -143,3 +143,6 @@ class UTCDateTime(datetime):
 
     def timestamp_ms(self) -> int:
         return int(self.timestamp() * 1000)
+
+
+LOCAL_TIMEZONE = datetime.now().astimezone().tzinfo

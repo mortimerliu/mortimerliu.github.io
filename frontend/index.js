@@ -1,12 +1,9 @@
 // constants
-const UP_EMPTY = '\u25B3\u25B3\u25B3'
-const UP_SOLID = '\u25A0\u25B2\u25B2'
-const DN_EMPTY = '\u25BD\u25BD\u25BD'
-const DN_SOLID = '\u25BC\u25BC\u25BC'
-const EMPTY_TO_SOLID = {
-    UP_EMPTY: UP_SOLID,
-    DN_EMPTY: DN_SOLID
-};
+const UP_EMPTY = '\u25B5\u25B5\u25B5'
+const UP_SOLID = '\u25B4\u25B4\u25B4'
+const DN_EMPTY = '\u25BF\u25BF\u25BF'
+const DN_SOLID = '\u25BE\u25BE\u25BE'
+const ROW_LIMIT = 10000;
 
 // states
 let shouldScroll = true;
@@ -100,8 +97,17 @@ function populateIntradayLow(event) {
 
 
 function populateStreamingRow(event, target, color, sign) {
-    const row = insertOneRowAtLast(target, 7);
+    const [row, lastSymbol] = insertOneRowAtLast(target, 7);
     row.cells[1].textContent = parseDateString(event['time']);
+    if (event['symbol'] === lastSymbol) {
+        if (sign === UP_EMPTY) {
+            sign = UP_SOLID;
+        } else if (sign === DN_EMPTY) {
+            sign = DN_SOLID;
+        } else {
+            throw new Error(`Unsupported sign: ${sign}`);
+        }
+    }
     row.cells[2].textContent = sign;
     row.cells[2].classList.add(color)
     row.cells[3].textContent = event['symbol'];
@@ -121,16 +127,22 @@ function insertOneRowAtLast(target, numCells) {
     // insert a row at the last of the `target` table with `numCells` cells
     // first cell is the index
     const tbody = target.querySelector('tbody');
-    const idx = tbody.rows.length;
+    const numRow = tbody.rows.length;
+    const lastRow = tbody.rows[numRow - 1];
+    const lastIdx = lastRow ? parseInt(lastRow.cells[0].textContent) : 0;
+    const lastSymbol = lastRow ? lastRow.cells[3].textContent : '';
     const row = tbody.insertRow();
     for (let i = 0; i < numCells; i++) {
         const cell = row.insertCell();
         if (i === 0) {
-            cell.textContent = idx + 1;
+            cell.textContent = lastIdx + 1;
         }
         cell.className = 'pb-0 pt-1';
     }
-    return row;
+    if (numRow >= ROW_LIMIT) {
+        tbody.deleteRow(0);
+    }
+    return [row, lastSymbol];
 }
 
 function parseDateString(dateString) {
