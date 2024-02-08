@@ -44,6 +44,8 @@ class Trader:
         bake_out_minutes: int = 0,
         n_top_tickers: int = 4,
         n_bottom_tickers: int = 4,
+        intraday_high_threshold: float = 0.0,
+        intraday_low_threshold: float = 0.0,
         _bypass_update_window: bool = False,
     ):
         # set up kafka consumer and producer
@@ -81,6 +83,8 @@ class Trader:
             self.tickers[contract.symbol] = IntradayTicker(
                 contract=contract,
                 kafka_producer=self._intraday_producer,
+                intraday_high_threshold=intraday_high_threshold,
+                intraday_low_threshold=intraday_low_threshold,
             )
 
         self.bake_in_minutes = bake_in_minutes
@@ -176,7 +180,7 @@ class Trader:
         ):
             logger.warning(
                 "ticker is outside update window: %s",
-                raw_ticker.time,
+                raw_ticker.time.to_timezone(),
             )
             return
         if math.isnan(raw_ticker.last):
@@ -204,6 +208,8 @@ if __name__ == "__main__":
     rtt = Trader(
         contracts=CONTRACTS,
         start_time=None,
-        _bypass_update_window=True,
+        intraday_high_threshold=0.0001,
+        intraday_low_threshold=0.0001,
+        _bypass_update_window=False,
     )
     rtt.consume()

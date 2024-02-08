@@ -91,7 +91,8 @@ class IntradayTicker:
 
     def _get_gap(self, price) -> float:
         if not self.hasData():
-            raise ValueError("No data")
+            logger.warning("Ticker %s has no data", self.contract.symbol)
+            return 0.0
         return (price - self.first_price) / self.first_price
 
     @property
